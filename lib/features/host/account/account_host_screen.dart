@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:desole_app/features/guest/dashboard/guest_dashboard.dart';
+import 'package:desole_app/features/host/account/widgets/profile_host_screen.dart';
 import 'package:desole_app/providers/session_provider.dart';
+import 'package:desole_app/services/users_services.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dio/dio.dart';
@@ -19,12 +21,16 @@ class AccountScreen extends StatefulWidget {
 }
 
 class _AccountScreenState extends State<AccountScreen> {
+  final UsersServices usersServices = UsersServices();
+  Map<String , dynamic>? userData;
+  bool _isLoading = true;
   late String _rolActual;
 
   @override
   void initState() {
     super.initState();
     _rolActual = widget.rol;
+    loadUserData();
   }
 
   final Color colorPrimary = const Color(0xFF001D5A);
@@ -39,7 +45,18 @@ class _AccountScreenState extends State<AccountScreen> {
       (route) => false,
     );
   }
-
+  Future<void> loadUserData() async{
+    final data = await usersServices.getUserProfile();
+    if(data != null){
+      setState(() {
+        userData = data;
+        _isLoading = false;
+      });
+    }
+    else{
+      print('No se pudo obtener el perfil');
+    }
+  }
   Future<void> _cambiarRol() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
@@ -114,11 +131,13 @@ class _AccountScreenState extends State<AccountScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Bienvenido/a ${widget.nombre}',
-              style: const TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
-            ),
-            Text(
+            _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : Column(
+                children: [
+        Text('Nombre: ${userData?['nombre'] ?? 'No disponible'}'),
+        Text('Apellido: ${userData?['apellido'] ?? 'No disponible'}'),
+         Text(
               'Rol actual : $_rolActual',
               style: const TextStyle(
                 fontSize: 16,
@@ -126,7 +145,12 @@ class _AccountScreenState extends State<AccountScreen> {
                 color: Colors.black,
               ),
             ),
-            const Divider(),
+        Text('Email: ${userData?['email'] ?? 'No disponible'}'),
+        const Divider(),
+      ],
+    ),
+           
+  
             const Text(
               'Opciones de Usuario',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
@@ -136,7 +160,11 @@ class _AccountScreenState extends State<AccountScreen> {
               leading: const Icon(Icons.person),
               title: const Text('Editar Perfil'),
               onTap: () {
-                print('Cuenta');
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => ProfileHostScreen()
+                  ),
+                );
               },
             ),
             const Divider(),

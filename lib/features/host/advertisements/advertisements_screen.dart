@@ -101,32 +101,92 @@ class _AdvertisementsScreenState extends State<AdvertisementsScreen> {
   }
 }
 
-class CardAccomodations extends StatelessWidget {
+class CardAccomodations extends StatefulWidget {
   final Alojamiento destino;
 
   const CardAccomodations({
     super.key,
     required this.destino,
-  });
+  });@override
+  State<CardAccomodations> createState() => _CardAccomodationsState();
+}
+class _CardAccomodationsState extends State<CardAccomodations>{
+  final AccomodationServices _services = AccomodationServices();
+  String? _firstImageUrl;
+  bool _isLoading = true;
+  @override 
+  void initState(){
+    super.initState();
+    _loadFirstImage();
+  }
+  Future<void> _loadFirstImage() async{
+    try{
+      final photos = await _services.getPhotosAccomadations(widget.destino.id);
+      if(photos.isNotEmpty){
+        final firstPhoto = photos.firstWhere(
+          (photo) => photo.firstPhoto == true,
+          orElse: () => photos.first,
+        );
+        setState(() {
+          _firstImageUrl = firstPhoto.urlFoto;
+          _isLoading = false;
+        });
+      }
+      else{
+        setState(() {
+          _isLoading = false;
+        });
+      }
 
+    }
+    catch(e){
+      print('Error al cargar la img $e');
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => DetailAccomodation(id: destino.id)
+  final destino = widget.destino;
 
-          ),
-        );
-      },
-      child: Card(
-        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        elevation: 4,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
+return InkWell(
+  onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => DetailAccomodation(id: widget.destino.id),
+      ),
+    );
+  },
+  child: Card(
+    margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    elevation: 2,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _isLoading
+            ? const SizedBox(
+                height: 200,
+                child: Center(child: CircularProgressIndicator()),
+              )
+            : _firstImageUrl != null
+                ? ClipRRect(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                    child: Image.network(
+                      _firstImageUrl!,
+                      height: 200,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    ),
+                  )
+                : const SizedBox(
+                    height: 200,
+                    child: Center(child: Text('Sin imagen')),
+                  ),
+        Padding(
+          padding: const EdgeInsets.all(12.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -134,7 +194,7 @@ class CardAccomodations extends StatelessWidget {
                 destino.titulo.toUpperCase(),
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
-                  fontSize: 28,
+                  fontSize: 20,
                 ),
               ),
               const SizedBox(height: 8),
@@ -145,7 +205,10 @@ class CardAccomodations extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
+      ],
+    ),
+  ),
+);
+
   }
 }
