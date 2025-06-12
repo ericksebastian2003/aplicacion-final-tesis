@@ -2,6 +2,7 @@ import 'package:desole_app/data/models/FotoAlojamientos.dart';
 import 'package:desole_app/role/guest/explore/widgets/detail_pays.dart';
 import 'package:desole_app/role/guest/explore/widgets/reserve_destination.dart';
 import 'package:desole_app/services/accomodation_services.dart';
+import 'package:desole_app/services/complaints_services.dart';
 import 'package:flutter/material.dart';
 import '../../../../data/models/Alojamientos.dart';
 
@@ -21,37 +22,148 @@ class _DetailScreenState extends State<DetailScreen> {
 
   final AccomodationServices _service = AccomodationServices();
 
-  void _showDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Confirmar la denuncia'),
-        content: const Text('¿Deseas denunciar este alojamiento?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
-            onPressed: () {
-              Navigator.pop(context);
-              _denunciarAlojamiento();
-            },
-            child: const Text('Denunciar'),
-          ),
-        ],
-      ),
-    );
-  }
+ void _showDialog() {
+  // Lista de motivos
+  final List<String> motivosAlojamiento = [
+    'Ruido excesivo',
+    'Alojamiento engañoso',
+    'Suciedad',
+    'Mal mantenimiento',
+    'Problemas de seguridad',
+    'Cancelación injustificada',
+    'Otro',
+  ];
+    // Lista de motivos
+  final List<String> motivosUsuario = [
+    'Ruido excesivo',
+    'Es un estafador',
+    'Mal comportamiento',
+    'Incumplimento de las normas',
+    'Conducta inapropiada',
+    'Otro',
+  ];
 
-  void _denunciarAlojamiento() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Denuncia enviada')),
-    );
-  }
+    String tipoSeleccionado = 'alojamiento'; // valor por defecto
+  List<String> motivos = motivosAlojamiento; // motivos actuales según tipo seleccionado
+  String motivoSeleccionado = motivos[0]; // motivo por defecto
+  String motivoEspecifico = '';
+
+  showDialog(
+    context: context,
+    builder: (context) {
+      return StatefulBuilder(
+        builder: (context, setState) {
+          // Actualizar la lista de motivos si cambia el tipo
+          motivos = tipoSeleccionado == 'alojamiento' ? motivosAlojamiento : motivosUsuario;
+
+          // Si el motivoSeleccionado no está en la lista actual (cambio de tipo), resetearlo
+          if (!motivos.contains(motivoSeleccionado)) {
+            motivoSeleccionado = motivos[0];
+          }
+
+          return AlertDialog(
+            title: const Text('Denunciar'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('Selecciona el tipo de denuncia:'),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<String>(
+                    value: tipoSeleccionado,
+                    items: const [
+                      DropdownMenuItem(value: 'alojamiento', child: Text('Alojamiento')),
+                      DropdownMenuItem(value: 'usuario', child: Text('Usuario')),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() {
+                          tipoSeleccionado = value;
+                          motivos = tipoSeleccionado == 'alojamiento' ? motivosAlojamiento : motivosUsuario;
+                          motivoSeleccionado = motivos[0];
+                          motivoEspecifico = '';
+                        });
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  const Text('Selecciona el motivo de la denuncia:'),
+                  ...motivos.map((motivo) {
+                    return RadioListTile<String>(
+                      title: Text(motivo),
+                      value: motivo,
+                      groupValue: motivoSeleccionado,
+                      onChanged: (value) {
+                        if (value != null) {
+                          setState(() {
+                            motivoSeleccionado = value;
+                            if (value != 'Otro') {
+                              motivoEspecifico = '';
+                            }
+                          });
+                        }
+                      },
+                    );
+                  }).toList(),
+                  if (motivoSeleccionado == 'Otro') ...[
+                    const SizedBox(height: 12),
+                    TextField(
+                      decoration: const InputDecoration(
+                        labelText: 'Especifique el motivo',
+                        border: OutlineInputBorder(),
+                      ),
+                      onChanged: (value) {
+                        motivoEspecifico = value;
+                      },
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            actions: [
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.white ,foregroundColor: Colors.red),
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancelar')
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red ,foregroundColor: Colors.white),
+                onPressed: () async {
+                  String motivoFinal = motivoSeleccionado;
+                  if (motivoSeleccionado == 'Otro' && motivoEspecifico.trim().isNotEmpty) {
+                    motivoFinal = motivoEspecifico.trim();
+                  }
+                  if (motivoFinal.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Por favor, selecciona o especifica un motivo')),
+                    );
+                    return;
+                  }
+
+                  Navigator.pop(context);
+
+                  final data = {
+                    'tipoReportado': tipoSeleccionado,
+                    'idReportado': tipoSeleccionado == 'alojamiento' ? accommodation!.id : accommodation!.anfitrionId,
+                    'motivo': motivoFinal,
+                  };
+
+                  await ComplaintsServices().createComplaintsForGuest(data);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Denuncia enviada')),
+                  );
+                },
+                child: const Text('Enviar denuncia'),
+              ),
+],
+          );
+        },
+      );
+    },
+  );
+}
+
+
 
   @override
   void initState() {
@@ -119,9 +231,8 @@ class _DetailScreenState extends State<DetailScreen> {
       ),
     ),
 
-    // Botón Denunciar (ícono de advertencia)
     IconButton(
-      icon: const Icon(Icons.report, color: Colors.redAccent),
+      icon: const Icon(Icons.report_problem, color: Colors.redAccent),
       tooltip: 'Denunciar alojamiento',
       onPressed: _showDialog,
     ),
@@ -265,7 +376,7 @@ class _DetailScreenState extends State<DetailScreen> {
                               );
                             },
                             child: const Text(
-                              'Reservar',
+                              'Reservar ahora',
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 20,

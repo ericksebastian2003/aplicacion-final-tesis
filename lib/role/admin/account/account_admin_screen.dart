@@ -80,9 +80,8 @@ class _AccountAdminScreenState extends State<AccountAdminScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Cuenta',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        title: Text('Cuenta',
+          style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.transparent,
       ),
@@ -150,11 +149,18 @@ class _AccountAdminScreenState extends State<AccountAdminScreen> {
                   const Divider(),
                   ListTile(
                     leading: const Icon(Icons.payments_rounded),
-                    title: const Text('Mis pagos'),
+                    title: const Text('Mi saldo'),
                     onTap: () {
                       // Implementa la funcionalidad aquí
                     },
                   ),
+                  const Divider(),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'Cerrar sesión',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                  ),
+              
                   const Divider(),
                   ListTile(
                     leading: const Icon(Icons.logout_outlined),

@@ -1,4 +1,5 @@
 import 'package:desole_app/role/admin/account/account_admin_screen.dart';
+import 'package:desole_app/role/admin/reports/report_screen.dart';
 import 'package:desole_app/role/admin/reserves/reserves_screen.dart';
 import 'package:flutter/material.dart';
 
@@ -23,8 +24,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   @override
   Widget build(BuildContext context) {
     final List<Widget> _pages = [
-      Center(child: Text('Módulo de Quejas')),
-      Center(child: Text('Módulo de Reportes')),
+      ReportScreen(),
       ReservesAdminScreen(),
       AccountAdminScreen(nombre: widget.nombre , rol: widget.rol,),
       
@@ -52,11 +52,7 @@ Widget hostNavigationBar({
     selectedIndex: currentIndex,
     onDestinationSelected: onTabSelected,
     destinations: const <NavigationDestination>[
-      NavigationDestination(
-        selectedIcon: Icon(Icons.announcement),
-        icon: Icon(Icons.announcement_outlined),
-        label: 'Quejas',
-      ),
+  
       NavigationDestination(
         selectedIcon: Icon(Icons.announcement),
         icon: Icon(Icons.announcement_outlined),

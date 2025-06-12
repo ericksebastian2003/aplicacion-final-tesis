@@ -13,13 +13,41 @@ class CreateDetails extends StatefulWidget {
 }
 
 class _CreateDetailsState extends State<CreateDetails> {
+  String _paisSeleccionado = 'Ecuador';
+  String? _provinciaSeleccionada;
+  String? _ciudadSeleccionada;
+
+  final Map<String, List<String>> provinciasYCiudades = {
+    'Azuay': ['Cuenca', 'Gualaceo', 'Paute', 'Sígsig', 'Chordeleg'],
+    'Bolívar': ['Guaranda', 'Chillanes', 'Chimbo', 'Echeandía', 'Caluma'],
+    'Cañar': ['Azogues', 'Biblián', 'Déleg', 'Suscal', 'La Troncal'],
+    'Carchi': ['Tulcán', 'Bolívar', 'Espejo', 'Mira', 'Montúfar'],
+    'Chimborazo': ['Riobamba', 'Guamote', 'Guano', 'Penipe', 'Colta'],
+    'Cotopaxi': ['Latacunga', 'La Maná', 'Pangua', 'Salcedo', 'Sigchos'],
+    'El Oro': ['Machala', 'Pasaje', 'Santa Rosa', 'Zaruma', 'Portovelo'],
+    'Esmeraldas': ['Esmeraldas', 'Atacames', 'Muisne', 'Quinindé', 'Rioverde'],
+    'Galápagos': ['Puerto Baquerizo Moreno', 'Puerto Villamil', 'Puerto Ayora'],
+    'Guayas': ['Guayaquil', 'Daule', 'Samborondón', 'Durán', 'Milagro'],
+    'Imbabura': ['Ibarra', 'Otavalo', 'Cotacachi', 'Pimampiro', 'Urcuquí'],
+    'Loja': ['Loja', 'Catamayo', 'Zapotillo', 'Puyango', 'Calvas'],
+    'Los Ríos': ['Babahoyo', 'Quevedo', 'Vinces', 'Montalvo', 'Palestina'],
+    'Manabí': ['Portoviejo', 'Manta', 'Jipijapa', 'Montecristi', 'Bahía de Caráquez'],
+    'Morona Santiago': ['Macas', 'Gualaquiza', 'Limón Indanza', 'Palora', 'Santiago'],
+    'Napo': ['Tena', 'El Chaco', 'Archidona', 'Quijos', 'Carlos Julio Arosemena Tola'],
+    'Orellana': ['Francisco de Orellana', 'La Joya de los Sachas', 'Loreto', 'Aguarico'],
+    'Pastaza': ['Puyo', 'Mera', 'Santa Clara', 'Arajuno'],
+    'Pichincha': ['Quito', 'Cayambe', 'Mejía', 'Rumiñahui', 'Pedro Moncayo'],
+    'Santa Elena': ['Santa Elena', 'La Libertad', 'Salinas'],
+    'Santo Domingo de los Tsáchilas': ['Santo Domingo', 'La Concordia'],
+    'Sucumbíos': ['Nueva Loja', 'Cascales', 'Cuyabeno', 'Gonzalo Pizarro', 'Putumayo'],
+    'Tungurahua': ['Ambato', 'Baños', 'Pelileo', 'Patate', 'Quero'],
+    'Zamora Chinchipe': ['Zamora', 'Yantzaza', 'Yacuambi', 'Centinela del Cóndor', 'Paquisha'],
+  };
+
   final _formKey = GlobalKey<FormState>();
 
   final TextEditingController _tituloController = TextEditingController();
   final TextEditingController _descripcionController = TextEditingController();
-  final TextEditingController _ciudadController = TextEditingController();
-  final TextEditingController _provinciaController = TextEditingController();
-  final TextEditingController _paisController = TextEditingController();
   final TextEditingController _direccionController = TextEditingController();
   final TextEditingController _precioController = TextEditingController();
   final TextEditingController _maxHuespedesController = TextEditingController();
@@ -30,9 +58,6 @@ class _CreateDetailsState extends State<CreateDetails> {
   void dispose() {
     _tituloController.dispose();
     _descripcionController.dispose();
-    _ciudadController.dispose();
-    _provinciaController.dispose();
-    _paisController.dispose();
     _direccionController.dispose();
     _precioController.dispose();
     _maxHuespedesController.dispose();
@@ -46,9 +71,9 @@ class _CreateDetailsState extends State<CreateDetails> {
       // Guardar datos en el provider
       formProvider.setTitulo(_tituloController.text);
       formProvider.setDescripcion(_descripcionController.text);
-      formProvider.setCiudad(_ciudadController.text);
-      formProvider.setProvincia(_provinciaController.text);
-      formProvider.setPais(_paisController.text);
+      formProvider.setCiudad(_ciudadSeleccionada ?? '');
+      formProvider.setProvincia(_provinciaSeleccionada ?? '');
+      formProvider.setPais(_paisSeleccionado);
       formProvider.setDireccion(_direccionController.text);
       formProvider.setPrecioNoche(int.parse(_precioController.text));
       formProvider.setMaxHuespedes(int.parse(_maxHuespedesController.text));
@@ -79,7 +104,7 @@ class _CreateDetailsState extends State<CreateDetails> {
         print('📨 Respuesta data: ${response.data}');
 
         if (response.statusCode == 201) {
-          final alojamientoId = response.data['id'] ?? response.data['_id'] ?? null;
+          final alojamientoId = response.data['id'] ?? response.data['_id'];
 
           if (alojamientoId == null) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -142,79 +167,189 @@ class _CreateDetailsState extends State<CreateDetails> {
     }
   }
 
- Future<bool> _subirImagenes(String alojamientoId, String token, FormAlojamientoProvider formProvider) async {
-  final dio = Dio();
-  final formData = FormData();
+  Future<bool> _subirImagenes(String alojamientoId, String token, FormAlojamientoProvider formProvider) async {
+    final dio = Dio();
+    final formData = FormData();
 
-  try {
-    print('📤 Iniciando la preparación de imágenes para subir...');
-   for (var image in formProvider.imagenesSeleccionadas) {
-      final fileName = image.path.split('/').last;
-      print('📤 Agregando imagen: $fileName, path: ${image.path}');
-      formData.files.add(
-        MapEntry(
-          'imagenes', // nombre del campo esperado por el backend
-          await MultipartFile.fromFile(image.path, filename: fileName),
-        ),
+    try {
+      print('📤 Iniciando la preparación de imágenes para subir...');
+      for (var image in formProvider.imagenesSeleccionadas) {
+        final fileName = image.path.split('/').last;
+        print('📤 Agregando imagen: $fileName, path: ${image.path}');
+        formData.files.add(
+          MapEntry(
+            'imagenes', // nombre del campo esperado por el backend
+            await MultipartFile.fromFile(image.path, filename: fileName),
+          ),
+        );
+      }
+
+      print('📦 FormData contiene ${formData.files.length} archivos.');
+      for (var fileEntry in formData.files) {
+        print(' - Key: ${fileEntry.key}, Filename: ${fileEntry.value.filename}');
+      }
+
+      final headers = {
+        'Authorization': 'Bearer $token',
+        // No establecer Content-Type para que Dio lo gestione automáticamente
+      };
+      print('🔐 Headers para subida: $headers');
+
+      final response = await dio.post(
+        'https://hospedajes-4rmu.onrender.com/api/alojamientos/fotos/$alojamientoId',
+        data: formData,
+        options: Options(headers: headers),
       );
+
+      print('📨 Respuesta de la subida imágenes: ${response.statusCode}');
+      return response.statusCode == 200 || response.statusCode == 201;
+    } catch (e) {
+      print('❌ Error subiendo imágenes: $e');
+      return false;
     }
-    
-
-
-    print('📦 FormData contiene ${formData.files.length} archivos.');
-    for (var fileEntry in formData.files) {
-      print(' - Key: ${fileEntry.key}, Filename: ${fileEntry.value.filename}');
-    }
-
-    final headers = {
-      'Authorization': 'Bearer $token',
-      // No establecer Content-Type para que Dio lo gestione
-    };
-    print('🔐 Headers configurados: $headers');
-    print('🆔 Subiendo imágenes al alojamiento con ID: $alojamientoId');
-
-    final response = await dio.post(
-      'https://hospedajes-4rmu.onrender.com/api/alojamientos/fotos/$alojamientoId',
-      data: formData,
-      options: Options(
-        headers: headers,
-      
-      ),
-      onSendProgress: (int sent, int total) {
-        print('⬆️ Progreso subida imágenes: $sent / $total bytes');
-      },
-    );
-
-    print('📸 Respuesta subida fotos - StatusCode: ${response.statusCode}');
-    print('📸 Respuesta subida fotos - Data: ${response.data}');
-    return response.statusCode == 200 || response.statusCode == 201;
-  } catch (e, stackTrace) {
-    print('❌ Error al subir imágenes: $e');
-    print('📄 StackTrace: $stackTrace');
-    return false;
   }
-}
 
+  List<String> get _provincias => provinciasYCiudades.keys.toList();
 
+  List<String> get _ciudades {
+    if (_provinciaSeleccionada == null) return [];
+    return provinciasYCiudades[_provinciaSeleccionada!] ?? [];
+  }
+
+  Widget _buildTextField({
+    required String label,
+    required TextEditingController controller,
+    required String? Function(String?) validator,
+    TextInputType keyboardType = TextInputType.text,
+  }) {
+    return TextFormField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
+      ),
+      keyboardType: keyboardType,
+      validator: validator,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Detalles del alojamiento')),
+      appBar: AppBar(
+        title: Text('Detalles del alojamiento',
+          style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+        )),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
           child: ListView(
             children: [
-              _buildTextField(_tituloController, 'Título', 'Ingresa un título'),
-              _buildTextField(_descripcionController, 'Descripción', 'Describe tu alojamiento'),
-              _buildTextField(_ciudadController, 'Ciudad', 'Ingresa la ciudad'),
-              _buildTextField(_provinciaController, 'Provincia', 'Ingresa la provincia'),
-              _buildTextField(_paisController, 'País', 'Ingresa el país'),
-              _buildTextField(_direccionController, 'Dirección', 'Ingresa la dirección'),
-              _buildTextField(_precioController, 'Precio por noche', 'Solo números', isNumeric: true),
-              _buildTextField(_maxHuespedesController, 'Máx. huéspedes', 'Solo números', isNumeric: true),
+              _buildTextField(
+                label: 'Título',
+                controller: _tituloController,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Por favor ingresa un título';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 10),
+              _buildTextField(
+                label: 'Descripción',
+                controller: _descripcionController,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Por favor ingresa una descripción';
+                  }
+                  return null;
+                },
+                keyboardType: TextInputType.multiline,
+              ),
+              const SizedBox(height: 10),
+              DropdownButtonFormField<String>(
+                decoration: const InputDecoration(
+                  labelText: 'Provincia',
+                  border: OutlineInputBorder(),
+                ),
+                value: _provinciaSeleccionada,
+                items: _provincias
+                    .map((provincia) => DropdownMenuItem(
+                          value: provincia,
+                          child: Text(provincia),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _provinciaSeleccionada = value;
+                    _ciudadSeleccionada = null;
+                  });
+                },
+                validator: (value) => value == null ? 'Selecciona una provincia' : null,
+              ),
+              const SizedBox(height: 10),
+              DropdownButtonFormField<String>(
+                decoration: const InputDecoration(
+                  labelText: 'Ciudad',
+                  border: OutlineInputBorder(),
+                ),
+                value: _ciudadSeleccionada,
+                items: _ciudades
+                    .map((ciudad) => DropdownMenuItem(
+                          value: ciudad,
+                          child: Text(ciudad),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _ciudadSeleccionada = value;
+                  });
+                },
+                validator: (value) => value == null ? 'Selecciona una ciudad' : null,
+              ),
+              const SizedBox(height: 10),
+              _buildTextField(
+                label: 'Dirección',
+                controller: _direccionController,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Por favor ingresa una dirección';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 10),
+              _buildTextField(
+                label: 'Precio por noche',
+                controller: _precioController,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Por favor ingresa un precio';
+                  }
+                  if (int.tryParse(value) == null) {
+                    return 'Ingrese un número válido';
+                  }
+                  return null;
+                },
+                keyboardType: TextInputType.number,
+              ),
+              const SizedBox(height: 10),
+              _buildTextField(
+                label: 'Máximo de huéspedes',
+                controller: _maxHuespedesController,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Por favor ingresa la cantidad máxima de huéspedes';
+                  }
+                  if (int.tryParse(value) == null) {
+                    return 'Ingrese un número válido';
+                  }
+                  return null;
+                },
+                keyboardType: TextInputType.number,
+              ),
               const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
@@ -230,7 +365,7 @@ class _CreateDetailsState extends State<CreateDetails> {
                   child: _enviando
                       ? const CircularProgressIndicator(color: Colors.white)
                       : const Text(
-                          'Siguiente',
+                          'Crear alojamiento',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 20,
@@ -242,25 +377,6 @@ class _CreateDetailsState extends State<CreateDetails> {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildTextField(TextEditingController controller, String label, String hint, {bool isNumeric = false}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 14.0),
-      child: TextFormField(
-        controller: controller,
-        keyboardType: isNumeric ? TextInputType.number : TextInputType.text,
-        decoration: InputDecoration(
-          labelText: label,
-          hintText: hint,
-          border: const OutlineInputBorder(),
-        ),
-        validator: (value) {
-          if (value == null || value.isEmpty) return 'Este campo es obligatorio';
-          return null;
-        },
       ),
     );
   }

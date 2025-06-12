@@ -12,7 +12,8 @@ class DetailReport extends StatelessWidget{
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(reportes.nombre),
+        title: Text('${reportes.reportante.nombre} ${reportes.reportante.apellido}')
+
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16.0),
@@ -20,7 +21,7 @@ class DetailReport extends StatelessWidget{
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              reportes.descripcion
+              reportes.motivo
             )
           ],
         ),

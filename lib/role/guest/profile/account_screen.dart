@@ -3,6 +3,7 @@ import 'package:desole_app/role/guest/dashboard/guest_dashboard.dart';
 import 'package:desole_app/role/guest/pays/my_pays.dart';
 import 'package:desole_app/role/guest/profile/widgets/deposit_balance.dart';
 import 'package:desole_app/role/guest/profile/widgets/my_balance.dart';
+import 'package:desole_app/role/guest/profile/widgets/my_complaints.dart';
 import 'package:desole_app/role/guest/profile/widgets/profile_guest_screen.dart';
 import 'package:desole_app/providers/session_provider.dart';
 import 'package:desole_app/services/users_services.dart';
@@ -194,7 +195,7 @@ class _AccountScreenState extends State<AccountScreen> {
                   ),
                   const Divider(),
                   ListTile(
-                    leading: const Icon(Icons.payments_rounded),
+                    leading: const Icon(Icons.attach_money_rounded),
                     title: const Text('Mi saldo'),
                     onTap: () {
                       Navigator.of(context).push(
@@ -214,11 +215,13 @@ class _AccountScreenState extends State<AccountScreen> {
                     ),
                   const Divider(),
                    ListTile(
-                    leading: const Icon(Icons.payments_rounded),
+                    leading: const Icon(Icons.report_problem),
                     title: const Text('Mis reportes'),
-                    onTap: () {
-                      // Implementa la funcionalidad aquí
-                    },
+                    onTap:  () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (context) => ReportesGuestScreen()),
+                      );
+                    }
                   ),
                   const Divider(),
                   ListTile(
