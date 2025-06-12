@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'package:dio/dio.dart';
 class SessionProvider with ChangeNotifier {
   bool _isLoggedIn = false;
   bool _isSessionLoaded = false;
@@ -17,6 +17,25 @@ class SessionProvider with ChangeNotifier {
   String? get rol => _rol;
   String? get fullName => _fullName;
 
+Future<bool> validarUsuarioExistente(String idUsuario) async {
+  final prefs = await SharedPreferences.getInstance();
+  final token = prefs.getString('token');
+
+  if (token == null) return false;
+
+  final dio = Dio();
+  dio.options.headers['Authorization'] = 'Bearer $token';
+
+  try {
+    final response = await dio.get('https://hospedajes-4rmu.onrender.com/api/usuarios/perfil');
+    return response.statusCode == 200;
+  } catch (e) {
+    return false;
+  }
+}
+
+
+
   // Login
   void login(String idUsuario, String email, String fullName, String rol) {
     _isLoggedIn = true;
@@ -30,16 +49,26 @@ class SessionProvider with ChangeNotifier {
 
   // Cargar sesión desde SharedPreferences
   Future<void> loadSessionFromPrefs() async {
-    final prefs = await SharedPreferences.getInstance();
+  final prefs = await SharedPreferences.getInstance();
 
-    _isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
-    _idUsuario = prefs.getString('userId');
-    _email = prefs.getString('userEmail');
-    _fullName = prefs.getString('userName');
-    _rol = prefs.getString('userRole');
-    _isSessionLoaded = true;
-    notifyListeners();
+  _isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+  _idUsuario = prefs.getString('userId');
+  _email = prefs.getString('userEmail');
+  _fullName = prefs.getString('userName');
+  _rol = prefs.getString('userRole');
+
+  // Validar que el usuario aún exista en el backend
+  if (_isLoggedIn && _idUsuario != null) {
+    final existe = await validarUsuarioExistente(_idUsuario!);
+    if (!existe) {
+      logout(); // Cierra sesión si no existe
+    }
   }
+
+  _isSessionLoaded = true;
+  notifyListeners();
+}
+
 
   // Cerrar sesión
   void logout() {

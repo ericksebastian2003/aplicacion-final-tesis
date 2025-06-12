@@ -1,9 +1,9 @@
 import 'package:desole_app/data/providers/form_alojamiento_provider.dart';
 import 'package:flutter/material.dart';
-import 'features/host/dashboard/host_dashboard.dart';
-import 'features/guest/dashboard/guest_dashboard.dart';
-import 'features/admin/dashboard/admin_dashboard.dart';
-import 'features/auth/widgets/login_screen.dart';
+import 'role/host/dashboard/host_dashboard.dart';
+import 'role/guest/dashboard/guest_dashboard.dart';
+import 'role/admin/dashboard/admin_dashboard.dart';
+import 'role/auth/login_screen.dart';
 import 'providers/session_provider.dart';
 import 'package:provider/provider.dart';
 void main() async {
