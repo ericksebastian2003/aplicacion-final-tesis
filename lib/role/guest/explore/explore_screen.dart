@@ -29,26 +29,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
       appBar: AppBar(
         title: const Text(
           'Explorar',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 24,
-          ),
+          style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
         ),
-        backgroundColor: Colors.transparent,
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          /*Padding(
-            padding: const EdgeInsets.all(16),
-            child: Text(
-              'Hola, ${widget.nombre[0].toUpperCase() + widget.nombre.substring(1).toLowerCase()}',
-              style: const TextStyle(
-                fontSize: 25,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),*/
           Expanded(
             child: FutureBuilder<List<Alojamiento>>(
               future: _futureAccommodations,
@@ -148,35 +134,71 @@ class _CardAccomodationsState extends State<CardAccomodations> {
                   )
                 : _firstImageUrl != null
                     ? ClipRRect(
-                        borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                        child: Image.network(
-                          _firstImageUrl!,
-                          height: 200,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                        ),
-                      )
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                      child: FadeInImage.assetNetwork(
+                        placeholder: 'assets/placeholder.jpg', // asegúrate de tener esta imagen en assets
+                        image: _firstImageUrl!,
+                        height: 200,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        fadeInDuration: const Duration(milliseconds: 300),
+                      ),
+                    )
+
                     : const SizedBox(
                         height: 200,
-                        child: Center(child: Text('Sin imagen')),
+                        child: Center(child: Text('Este alojamiento no tiene imagenes')),
                       ),
             Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.destino.titulo.toUpperCase(),
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 28),
-                  ),
-                  const SizedBox(height: 8),
-                  Text('Tipo: ${widget.destino.tipoAlojamiento}'),
-                  Text('Precio por noche: \$${widget.destino.precioNoche}'),
-                  Text('Ubicación: ${widget.destino.ciudad}, ${widget.destino.provincia}, ${widget.destino.pais}'),
-                  Text('Dirección: ${widget.destino.direccion}'),
-                ],
-              ),
-            ),
+  padding: const EdgeInsets.all(16),
+  child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        widget.destino.titulo,
+        style: const TextStyle(
+          fontSize: 22,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      const SizedBox(height: 8),
+      Row(
+        children: [
+          const Icon(Icons.home_work_outlined, size: 18, color: Colors.grey),
+          const SizedBox(width: 6),
+          Text(widget.destino.tipoAlojamiento),
+        ],
+      ),
+      const SizedBox(height: 6),
+      Row(
+        children: [
+          const Icon(Icons.attach_money, size: 18, color: Colors.grey),
+          const SizedBox(width: 6),
+          Text('Precio por noche: \$${widget.destino.precioNoche.toStringAsFixed(2)}'),
+        ],
+      ),
+      const SizedBox(height: 6),
+      Row(
+        children: [
+          const Icon(Icons.location_on_outlined, size: 18, color: Colors.grey),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text('${widget.destino.ciudad}, ${widget.destino.provincia}, ${widget.destino.pais}'),
+          ),
+        ],
+      ),
+      const SizedBox(height: 6),
+      Row(
+        children: [
+          const Icon(Icons.map_outlined, size: 18, color: Colors.grey),
+          const SizedBox(width: 6),
+          Expanded(child: Text(widget.destino.direccion)),
+        ],
+      ),
+    ],
+  ),
+),
+
           ],
         ),
       ),

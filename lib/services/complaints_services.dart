@@ -46,7 +46,7 @@ class ComplaintsServices {
   }
 
   // Cambiar estado del reporte
-  Future<bool> changeStatusComplaints(String idReporte) async {
+  Future<bool> changeStatusComplaints(String idReporte , String estado) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token') ?? '';
@@ -54,6 +54,9 @@ class ComplaintsServices {
 
       final response = await _dio.put(
         'https://hospedajes-4rmu.onrender.com/api/reportes/estado/$idReporte',
+        data: {
+          'estado' : estado
+        }
       );
 
       print('📤 Cambiar estado ID: $idReporte');

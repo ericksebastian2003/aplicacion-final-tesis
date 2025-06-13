@@ -54,7 +54,7 @@ class _ReportesGuestScreenState extends State<ReportesGuestScreen> {
                     return ListView.builder(
                       itemCount: reportes.length,
                       itemBuilder: (context, index) {
-                        return CardReserves(reportes: reportes[index]);
+                        return CardComplaints(reporte: reportes[index]);
                       },
                     );
                   }
@@ -68,34 +68,73 @@ class _ReportesGuestScreenState extends State<ReportesGuestScreen> {
   }
 }
 
-class CardReserves extends StatelessWidget {
-  final Reportes reportes;
-  const CardReserves({super.key, required this.reportes});
+class CardComplaints extends StatelessWidget {
+  final Reportes reporte;
+
+  const CardComplaints({
+    super.key,
+    required this.reporte,
+  });
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      // Puedes descomentar esto si tienes una pantalla de detalle
-      // onTap: () {
-      //   Navigator.push(context, MaterialPageRoute(builder: (_) => DetailGuestReservation(reservas: reportes)));
-      // },
+      /*onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+            Detail(reportes: reporte),
+          ),
+        );
+      },*/
       child: Card(
-        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
         elevation: 4,
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(14.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Reporte ID: ${reportes.id}',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                Text('Id del reporte :${reporte.id}',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
               ),
+              const SizedBox(height: 4),
+
+              // Motivo
+              Text(
+                '📌 Motivo: ${reporte.motivo}',
+                style: TextStyle(fontSize: 15),
+              ),
+
               const SizedBox(height: 6),
-              Text(reportes.estado),
-              const SizedBox(height: 6),
-              Text('Fecha: ${reportes.motivo}'),
+
+              // Estado del reporte
+              Container(
+                margin: const EdgeInsets.only(top: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: reporte.estado == 'pendiente'
+                      ? Colors.orange[100]
+                      : Colors.green[100],
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  reporte.estado.toUpperCase(),
+                  style: TextStyle(
+                    color: reporte.estado == 'pendiente'
+                        ? Colors.orange[800]
+                        : Colors.green[800],
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              )
             ],
           ),
         ),

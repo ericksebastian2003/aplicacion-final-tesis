@@ -19,6 +19,14 @@ class _DetailScreenState extends State<DetailScreen> {
   Alojamiento? accommodation;
   List<FotosAlojamientos> fotos = [];
   bool isLoading = true;
+  PageController _pageController = PageController();
+  int _currentPage = 0;
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
 
   final AccomodationServices _service = AccomodationServices();
 
@@ -162,9 +170,6 @@ class _DetailScreenState extends State<DetailScreen> {
     },
   );
 }
-
-
-
   @override
   void initState() {
     super.initState();
@@ -200,56 +205,32 @@ class _DetailScreenState extends State<DetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-  title: Text(
-    accommodation != null ? capitalizar(accommodation!.titulo) : 'Detalle',
-    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 26),
-  ),
-  backgroundColor: Colors.transparent,
-  elevation: 0,
-  actions: [
-    // Botón Reservar (puedes usar un ícono o texto)
-    TextButton(
-      onPressed: () {
-        if (accommodation != null) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => ReserveDestination(
-                duenio: accommodation!.anfitrionId,
-                alojamientoId: accommodation!.id,
-                precioPorNoche: accommodation!.precioNoche,
-                maxHuespedes: accommodation!.maxHuespedes,
-              ),
+        title: Text(
+          accommodation != null ? capitalizar(accommodation!.titulo) : 'Detalle del alojamiento',
+          style: const TextStyle(
+            color: Colors.black,
+            fontSize: 26, 
+            fontWeight: FontWeight.bold
+            //shadows: [Shadow(blurRadius: 6, color: Colors.black)],
+          ),
+        ),
+        actions: [
+          IconButton(
+            onPressed: _showDialog,
+            icon: const Icon(
+              Icons.warning_amber_rounded,
+              color: Colors.redAccent,
+              size: 30,
+              shadows: [Shadow(blurRadius: 8, color: Colors.black45)],
             ),
-          );
-        }
-      },
-      child: const Text(
-        'Reservar',
-        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            tooltip: 'Denunciar alojamiento',
+          ),
+        ],
       ),
-    ),
-
-    IconButton(
-      icon: const Icon(Icons.report_problem, color: Colors.redAccent),
-      tooltip: 'Denunciar alojamiento',
-      onPressed: _showDialog,
-    ),
-  ],
-),
-
       body: isLoading
-          ? const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 10),
-                  Text("Cargando alojamiento..."),
-                ],
-              ),
-            )
+          ? const Center(child: CircularProgressIndicator())
           : accommodation == null
               ? Center(
                   child: Column(
@@ -264,135 +245,147 @@ class _DetailScreenState extends State<DetailScreen> {
                     ],
                   ),
                 )
-              : Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (fotos.isNotEmpty) ...[
-                          SizedBox(
-                            height: 220,
-                            child: ListView.builder(
-                              scrollDirection: Axis.horizontal,
+              : Stack(
+                  children: [
+                    // Carrusel de imágenes
+                    if (fotos.isNotEmpty)
+                      SizedBox(
+                        height: 320,
+                        child: Stack(
+                          children: [
+                            PageView.builder(
+                              controller: _pageController,
                               itemCount: fotos.length,
+                              onPageChanged: (index) {
+                                setState(() {
+                                  _currentPage = index;
+                                });
+                              },
                               itemBuilder: (context, index) {
-                                final foto = fotos[index];
-                                return Padding(
-                                  padding: const EdgeInsets.only(right: 8.0),
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(12),
-                                    child: Image.network(
-                                      foto.urlFoto,
-                                      width: 300,
-                                      height: 200,
-                                      fit: BoxFit.cover,
-                                      loadingBuilder: (context, child, loadingProgress) {
-                                        if (loadingProgress == null) return child;
-                                        return const Center(child: CircularProgressIndicator());
-                                      },
-                                      errorBuilder: (context, error, stackTrace) =>
-                                          const Icon(Icons.broken_image, size: 80),
-                                    ),
+                                return ClipRRect(
+                                  borderRadius: const BorderRadius.only(
+                                    bottomLeft: Radius.circular(30),
+                                    bottomRight: Radius.circular(30),
+                                  ),
+                                  child: Image.network(
+                                    fotos[index].urlFoto,
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
+                                    loadingBuilder: (context, child, loadingProgress) =>
+                                        loadingProgress == null
+                                            ? child
+                                            : const Center(child: CircularProgressIndicator()),
+                                    errorBuilder: (_, __, ___) =>
+                                        const Icon(Icons.broken_image, size: 80),
                                   ),
                                 );
                               },
                             ),
-                          ),
-                          const SizedBox(height: 16),
-                        ],
-                        const Text(
-                          "Descripción",
-                          style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          accommodation?.descripcion ?? 'Sin descripción',
-                          style: const TextStyle(fontSize: 24),
-                        ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          "Tipo de Alojamiento",
-                          style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
-                        ),
-                        Text(
-                          capitalizar(accommodation?.tipoAlojamiento ?? ''),
-                          style: const TextStyle(fontSize: 24),
-                        ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          'Precio por noche:',
-                          style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
-                        ),
-                        Text(
-                          '\$${accommodation?.precioNoche ?? '0'}',
-                          style: const TextStyle(fontSize: 24),
-                        ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          'Máximo de huéspedes:',
-                          style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
-                        ),
-                        Text(
-                          '${accommodation?.maxHuespedes ?? '0'}',
-                          style: const TextStyle(fontSize: 24),
-                        ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          'Dirección:',
-                          style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
-                        ),
-                        Text(
-                          '${accommodation?.direccion ?? ''}, '
-                          '${accommodation?.ciudad ?? ''}, '
-                          '${accommodation?.provincia ?? ''}, '
-                          '${accommodation?.pais ?? ''}',
-                          style: const TextStyle(fontSize: 24),
-                        ),
-                        const SizedBox(height: 12),
-
-                        // Botón Reservar
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              backgroundColor: Colors.black,
-                            ),
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => ReserveDestination(
-                                    duenio: accommodation!.anfitrionId,
-                                    alojamientoId: accommodation!.id,
-                                    precioPorNoche: accommodation!.precioNoche,
-                                    maxHuespedes: accommodation!.maxHuespedes,
+                            // Indicador de páginas
+                            Positioned(
+                              bottom: 16,
+                              left: 0,
+                              right: 0,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: List.generate(
+                                  fotos.length,
+                                  (index) => AnimatedContainer(
+                                    duration: const Duration(milliseconds: 300),
+                                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                                    width: _currentPage == index ? 12 : 8,
+                                    height: 8,
+                                    decoration: BoxDecoration(
+                                      color: _currentPage == index
+                                          ? Colors.white
+                                          : Colors.white.withOpacity(0.5),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
                                   ),
                                 ),
-                              );
-                            },
-                            child: const Text(
-                              'Reservar ahora',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.w700,
                               ),
                             ),
-                          ),
+                          ],
                         ),
+                      ),
 
-                        const SizedBox(height: 12),
-
-                        
-                      ],
+                    // Contenido flotante
+                    DraggableScrollableSheet(
+                      initialChildSize: 0.65,
+                      minChildSize: 0.65,
+                      maxChildSize: 0.95,
+                      builder: (_, controller) => Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                          boxShadow: [BoxShadow(blurRadius: 10, color: Colors.black12)],
+                        ),
+                        child: ListView(
+                          controller: controller,
+                          children: [
+                            _buildTitle("Tipo de Alojamiento"),
+                            Text(capitalizar(accommodation?.tipoAlojamiento ?? '')),
+                            const SizedBox(height: 16),
+                            _buildTitle("Descripción"),
+                            Text(accommodation?.descripcion ?? 'Sin descripción'),
+                            const SizedBox(height: 16),
+                            _buildTitle("Precio por noche"),
+                            Text("\$${accommodation?.precioNoche ?? '0'}"),
+                            const SizedBox(height: 16),
+                            _buildTitle("Máximo de huéspedes"),
+                            Text("${accommodation?.maxHuespedes ?? '0'}"),
+                            const SizedBox(height: 16),
+                            _buildTitle("Dirección"),
+                            Text(
+                              '${accommodation?.direccion ?? ''}, '
+                              '${accommodation?.ciudad ?? ''}, '
+                              '${accommodation?.provincia ?? ''}, '
+                              '${accommodation?.pais ?? ''}',
+                            ),
+                            const SizedBox(height: 24),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  backgroundColor: Colors.black,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => ReserveDestination(
+                                        duenio: accommodation!.anfitrionId,
+                                        alojamientoId: accommodation!.id,
+                                        precioPorNoche: accommodation!.precioNoche,
+                                        maxHuespedes: accommodation!.maxHuespedes,
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child: const Text(
+                                  'Reservar ahora',
+                                  style: TextStyle(fontSize: 18, color: Colors.white),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
+    );
+  }
+
+  Widget _buildTitle(String text) {
+    return Text(
+      text,
+      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
     );
   }
 }

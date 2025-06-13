@@ -32,7 +32,6 @@ class _ReservesAdminScreenState extends State<ReservesAdminScreen> {
         title: Text('Reservas',
           style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
         ),
-        centerTitle: true,
       ),
       body: Padding(
         padding: const EdgeInsets.all(12.0),
@@ -44,7 +43,7 @@ class _ReservesAdminScreenState extends State<ReservesAdminScreen> {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
               } else if (snapshot.hasError) {
-                return Center(child: Text('❌ Error: ${snapshot.error}'));
+                return Center(child: Text('Error: ${snapshot.error}'));
               } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                 return const Center(child: Text('📭 No hay reservas realizadas'));
               } else {
@@ -88,7 +87,7 @@ class CardReserves extends StatelessWidget {
             // Título
             Row(
               children: [
-                const Icon(Icons.home, color: Colors.blueAccent),
+                const Icon(Icons.home, color: Colors.grey),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -114,9 +113,9 @@ class CardReserves extends StatelessWidget {
               children: [
                 const Icon(Icons.calendar_today, size: 20),
                 const SizedBox(width: 6),
-                Text('Check-in: ${formatDate(reservas.fechaCheckIn)}'),
+                Text('Fecha de ingreso: ${formatDate(reservas.fechaCheckIn)}'),
                 const SizedBox(width: 12),
-                Text('Check-out: ${formatDate(reservas.fechaCheckOut)}'),
+                Text('Fecha de salida: ${formatDate(reservas.fechaCheckOut)}'),
               ],
             ),
             const SizedBox(height: 6),
@@ -154,20 +153,28 @@ class CardReserves extends StatelessWidget {
 
             // Botón "Ver más"
             Align(
-              alignment: Alignment.centerRight,
-              child: OutlinedButton.icon(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => DetailAdminReserve(reservas: reservas),
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.arrow_forward),
-                label: const Text('Ver más'),
-              ),
-            ),
+  alignment: Alignment.centerRight,
+  child: OutlinedButton.icon(
+    onPressed: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => DetailAdminReserve(reservas: reservas),
+        ),
+      );
+    },
+    icon: const Icon(Icons.arrow_forward, color: Colors.white), // o el icono que prefieras
+    label: const Text(
+      'Ver más',
+      style: TextStyle(color: Colors.white),
+    ),
+    style: OutlinedButton.styleFrom(
+      backgroundColor: Colors.black,
+      side: BorderSide(color: Colors.black), // borde negro (igual al fondo para que no se note)
+    ),
+  ),
+),
+
           ],
         ),
       ),

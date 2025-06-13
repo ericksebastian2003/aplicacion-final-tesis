@@ -51,6 +51,7 @@ dev_dependencies:
   provider: ^6.1.1
   url_launcher: ^6.2.4
   dio: ^5.4.0
+  table_calendar: ^3.0.7
   
   #Para las imagenes
   image_picker : ^1.1.0

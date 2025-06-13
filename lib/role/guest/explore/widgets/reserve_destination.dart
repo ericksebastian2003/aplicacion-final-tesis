@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:table_calendar/table_calendar.dart';
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:desole_app/role/guest/dashboard/guest_dashboard.dart';
@@ -25,21 +26,38 @@ class ReserveDestination extends StatefulWidget {
 
 class _ReserveDestinationState extends State<ReserveDestination> {
   final _formKey = GlobalKey<FormState>();
-  final _fechaCheckInController = TextEditingController();
-  final _fechaCheckOutController = TextEditingController();
   bool _enviando = false;
   int _cantidadHuespedes = 1;
+  DateTime? _checkIn;
+  DateTime? _checkOut;
   int _cantidadNoches = 1;
 
+  // Para el calendario:
+  CalendarFormat _calendarFormat = CalendarFormat.month;
+  DateTime _focusedDay = DateTime.now();
+
   @override
-  void dispose() {
-    _fechaCheckInController.dispose();
-    _fechaCheckOutController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    initializeDateFormatting('es_ES', null); // Inicializa Intl en español
   }
 
   Future<void> _crearReservation() async {
     if (!_formKey.currentState!.validate()) return;
+
+    if (_checkIn == null || _checkOut == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor, seleccione las fechas de ingreso y salida')),
+      );
+      return;
+    }
+
+    if (_checkOut!.isBefore(_checkIn!)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('La fecha de salida debe ser después de la de ingreso')),
+      );
+      return;
+    }
 
     try {
       setState(() => _enviando = true);
@@ -48,8 +66,6 @@ class _ReserveDestinationState extends State<ReserveDestination> {
       final token = prefs.getString('token') ?? '';
       final huespedId = prefs.getString('userId') ?? '';
 
-      final checkIn = DateTime.parse(_fechaCheckInController.text);
-      final checkOut = DateTime.parse(_fechaCheckOutController.text);
       final noches = _cantidadNoches;
 
       final numHuespedes = _cantidadHuespedes;
@@ -65,8 +81,8 @@ class _ReserveDestinationState extends State<ReserveDestination> {
       final datos = {
         "huesped": huespedId,
         "alojamiento": widget.alojamientoId,
-        "fechaCheckIn": _fechaCheckInController.text,
-        "fechaCheckOut": _fechaCheckOutController.text,
+        "fechaCheckIn": _checkIn!.toIso8601String(),
+        "fechaCheckOut": _checkOut!.toIso8601String(),
         "numeroHuespedes": numHuespedes,
         "precioTotal": precioTotal,
       };
@@ -80,25 +96,23 @@ class _ReserveDestinationState extends State<ReserveDestination> {
       );
 
       if (response.statusCode == 201) {
-  final reservaData = response.data;
-  final idReserva = reservaData['_id']; 
+        final reservaData = response.data;
+        final idReserva = reservaData['_id'];
 
-  // Guardar el ID de la reserva para uso posterior
-  await prefs.setString('reservaId', idReserva);
-  print(idReserva);
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text('Reserva creada con éxito. ID: $idReserva')),
-  );
+        await prefs.setString('reservaId', idReserva);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Reserva creada con éxito. ID: $idReserva')),
+        );
 
-  final rol = prefs.getString('rol');
-  final nombre = prefs.getString('nombre') ?? '';
+        final rol = prefs.getString('rol');
+        final nombre = prefs.getString('nombre') ?? '';
 
-  Navigator.of(context).pushAndRemoveUntil(
-    MaterialPageRoute(
-      builder: (context) => GuestDashboard(rol: rol!, nombre: nombre),
-    ),
-    (route) => false,
-  );
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder: (context) => GuestDashboard(rol: rol!, nombre: nombre),
+          ),
+          (route) => false,
+        );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Error al crear la reserva')),
@@ -113,140 +127,243 @@ class _ReserveDestinationState extends State<ReserveDestination> {
     }
   }
 
+  void _onDaySelected(DateTime selectedDay, DateTime focusedDay) {
+    setState(() {
+      // Si no hay checkIn, lo asignamos
+      if (_checkIn == null || (_checkIn != null && _checkOut != null)) {
+        _checkIn = selectedDay;
+        _checkOut = null;
+        _cantidadNoches = 1;
+      } else if (_checkIn != null && _checkOut == null) {
+        // Si la fecha seleccionada es después del checkIn, asignamos checkOut
+        if (selectedDay.isAfter(_checkIn!)) {
+          _checkOut = selectedDay;
+          _cantidadNoches = _checkOut!.difference(_checkIn!).inDays;
+        } else {
+          // Si no, reasignamos checkIn
+          _checkIn = selectedDay;
+        }
+      }
+      _focusedDay = focusedDay;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final precioTotal = widget.precioPorNoche * _cantidadNoches;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Reservar alojamiento')),
+      appBar: AppBar(
+        title: const Text('Reservar alojamiento',
+            style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
+      ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
           child: ListView(
             children: [
-              _buildTextField(_fechaCheckInController, 'Fecha Check-in', 'YYYY-MM-DD'),
-              _buildTextField(_fechaCheckOutController, 'Fecha Check-out', 'YYYY-MM-DD'),
-              const SizedBox(height: 12),
-              Text('Número de huéspedes'),
+              const Text(
+                'Selecciona fechas',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+              const SizedBox(height: 8),
+              TableCalendar(
+                locale: 'es_ES',
+                firstDay: DateTime.now(),
+                lastDay: DateTime.now().add(const Duration(days: 365)),
+                focusedDay: _focusedDay,
+                calendarFormat: _calendarFormat,
+                onFormatChanged: (format) {
+                  setState(() {
+                    _calendarFormat = format;
+                  });
+                },
+                selectedDayPredicate: (day) =>
+                    (day.isAtSameMomentAs(_checkIn ?? DateTime(0)) ||
+                        day.isAtSameMomentAs(_checkOut ?? DateTime(0))),
+                onDaySelected: _onDaySelected,
+                calendarStyle: const CalendarStyle(
+                  // Colores tipo Airbnb blanco y negro
+                  todayDecoration: BoxDecoration(
+                      color: Colors.black,
+                      shape: BoxShape.circle,
+                  ),
+                  selectedDecoration: BoxDecoration(
+                    color: Colors.black,
+                    shape: BoxShape.circle,
+                  ),
+                  selectedTextStyle: TextStyle(color: Colors.white),
+                  weekendTextStyle: TextStyle(color: Colors.grey),
+                  defaultTextStyle: TextStyle(color: Colors.black),
+                  outsideTextStyle: TextStyle(color: Colors.grey),
+                ),
+                headerStyle: HeaderStyle(
+                  formatButtonVisible: false,
+                  titleCentered: true,
+                  titleTextStyle: const TextStyle(
+                    color: Colors.black,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  leftChevronIcon: const Icon(
+                    Icons.chevron_left,
+                    color: Colors.black,
+                  ),
+                  rightChevronIcon: const Icon(
+                    Icons.chevron_right,
+                    color: Colors.black,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                _checkIn == null
+                    ? 'Fecha de ingreso: No seleccionada'
+                    : 'Fecha de ingreso: ${_checkIn!.toLocal().toString().split(' ')[0]}',
+                style: const TextStyle(fontSize: 16),
+              ),
+              Text(
+                _checkOut == null
+                    ? 'Fecha de salida: No seleccionada'
+                    : 'Fecha de salida: ${_checkOut!.toLocal().toString().split(' ')[0]}',
+                style: const TextStyle(fontSize: 16),
+              ),
+              const SizedBox(height: 20),
+
+              const Text(
+                'Número de huéspedes',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+              const SizedBox(height: 8),
               Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   IconButton(
+                    iconSize: 24,
                     onPressed: _cantidadHuespedes > 1
                         ? () => setState(() => _cantidadHuespedes--)
                         : null,
                     icon: const Icon(Icons.remove_circle_outline),
+                    color: Colors.black,
                   ),
-                  Text('$_cantidadHuespedes', style: const TextStyle(fontSize: 16)),
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 20),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.black, width: 2),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      '$_cantidadHuespedes',
+                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    ),
+                  ),
                   IconButton(
+                    iconSize: 24,
                     onPressed: _cantidadHuespedes < widget.maxHuespedes
                         ? () => setState(() => _cantidadHuespedes++)
                         : null,
                     icon: const Icon(Icons.add_circle_outline),
+                    color: Colors.black,
                   ),
                 ],
               ),
               const SizedBox(height: 20),
-              const Text('Cantidad de noches', style: TextStyle(fontWeight: FontWeight.bold)),
-              Row(
-                children: [
-                  IconButton(
-                    onPressed: _cantidadNoches > 1
-                        ? () => setState(() => _cantidadNoches--)
-                        : null,
-                    icon: const Icon(Icons.remove_circle_outline),
-                  ),
-                  Text('$_cantidadNoches', style: const TextStyle(fontSize: 16)),
-                  IconButton(
-                    onPressed: () => setState(() => _cantidadNoches++),
-                    icon: const Icon(Icons.add_circle_outline),
-                  ),
-                ],
+
+              Text(
+                'Cantidad de noches: $_cantidadNoches',
+                style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
+                    color: Colors.black),
+                textAlign: TextAlign.center,
               ),
               const SizedBox(height: 20),
-              Text('Precio total: \$${precioTotal}',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 20),
+
+              Text(
+                'Precio total: \$${precioTotal}',
+                style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 30),
               ElevatedButton(
                 onPressed: _enviando
-    ? null
-    : () async {
-        if (!_formKey.currentState!.validate()) return;
+                    ? null
+                    : () async {
+                        if (_checkIn == null || _checkOut == null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content:
+                                    Text('Por favor selecciona ambas fechas')),
+                          );
+                          return;
+                        }
+                        if (_cantidadNoches < 1) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content:
+                                    Text('La cantidad de noches debe ser al menos 1')),
+                          );
+                          return;
+                        }
 
-        // Primero crea la reserva
-        await _crearReservation();
+                        await _crearReservation();
 
-        // Luego accede a SharedPreferences y obtén el idReserva
-        final prefs = await SharedPreferences.getInstance();
-        final idReserva = prefs.getString('reservaId');
+                        final prefs = await SharedPreferences.getInstance();
+                        final idReserva = prefs.getString('reservaId');
 
-        if (idReserva == null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('No se pudo obtener el ID de la reserva')),
-          );
-          return;
-        }
+                        if (idReserva == null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content:
+                                    Text('No se pudo obtener el ID de la reserva')),
+                          );
+                          return;
+                        }
 
-        // Ahora redirige al proceso de pago con el ID de la reserva
-        final resultadoPago = await Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => PayAccomodation(
-              alojamiento: widget.alojamientoId,
-              nombreDuenio: widget.duenio,
-              noches: _cantidadNoches,
-              precioPorNoche: widget.precioPorNoche,
-              precioTotal: precioTotal,
-              idReserva: idReserva,
-            ),
-          ),
-        );
+                        final resultadoPago = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => PayAccomodation(
+                              alojamiento: widget.alojamientoId,
+                              nombreDuenio: widget.duenio,
+                              noches: _cantidadNoches,
+                              precioPorNoche: widget.precioPorNoche,
+                              precioTotal: precioTotal,
+                              idReserva: idReserva,
+                            ),
+                          ),
+                        );
 
-        if (resultadoPago != true) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Pago cancelado o fallido')),
-          );
-        }
-      },
-
+                        if (resultadoPago != true) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text('Pago cancelado o fallido')),
+                          );
+                        }
+                      },
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                   backgroundColor: Colors.black,
                 ),
                 child: _enviando
                     ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text('Siguiente', style: TextStyle(color: Colors.white, fontSize: 18)),
+                    : const Text('Siguiente',
+                        style: TextStyle(color: Colors.white, fontSize: 18)),
               ),
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildTextField(
-    TextEditingController controller,
-    String label,
-    String hint, {
-    bool isNumeric = false,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 14.0),
-      child: TextFormField(
-        controller: controller,
-        keyboardType: isNumeric ? TextInputType.number : TextInputType.text,
-        decoration: InputDecoration(
-          labelText: label,
-          hintText: hint,
-          border: const OutlineInputBorder(),
-        ),
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return 'Este campo es obligatorio';
-          }
-          return null;
-        },
       ),
     );
   }

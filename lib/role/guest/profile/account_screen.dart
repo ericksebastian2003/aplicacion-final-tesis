@@ -128,9 +128,8 @@ class _AccountScreenState extends State<AccountScreen> {
       appBar: AppBar(
         title: const Text(
           'Cuenta',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
         ),
-        backgroundColor: Colors.transparent,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
@@ -187,7 +186,7 @@ class _AccountScreenState extends State<AccountScreen> {
                       );
                     },
                   ),
-                  const Divider(),
+          
                   const SizedBox(height: 10),
                   const Text(
                     'Opciones de pago',
@@ -203,7 +202,7 @@ class _AccountScreenState extends State<AccountScreen> {
                       );
                     }
                     ),
-                  const Divider(),
+                  
                    ListTile(
                     leading: const Icon(Icons.payments_rounded),
                     title: const Text('Mis pagos'),
@@ -213,6 +212,11 @@ class _AccountScreenState extends State<AccountScreen> {
                       );
                     }
                     ),
+                   const SizedBox(height: 10),
+                  const Text(
+                    'Opciones de reportes',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                  ),
                   const Divider(),
                    ListTile(
                     leading: const Icon(Icons.report_problem),
@@ -222,6 +226,11 @@ class _AccountScreenState extends State<AccountScreen> {
                         MaterialPageRoute(builder: (context) => ReportesGuestScreen()),
                       );
                     }
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'Cerrar sesión',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
                   ),
                   const Divider(),
                   ListTile(

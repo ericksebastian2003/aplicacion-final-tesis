@@ -75,86 +75,85 @@ void _confirmarEliminar(BuildContext context, String id) async {
   Widget build(BuildContext context){
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          reservas.tituloAlojamiento
+        title: const Text(
+          'Detalle del alojamiento',
+          style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
         ),
       ),
       body: Padding(
         padding : const EdgeInsets.all(16.0),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children :[
-          Text(
-                  'Detalles de la Reserva',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 16),
-            Text('Check-in: ${reservas.fechaCheckIn.toLocal().toString().split(' ')[0]}'),
-            Text('Check-out: ${reservas.fechaCheckOut.toLocal().toString().split(' ')[0]}'),
-            Text('Huéspedes: ${reservas.numeroHuespedes}'),
-            Text('Precio total: \$${reservas.precioTotal}'),
-            Text('Estado: ${reservas.estadoReserva}'),
-            Text('Pago: ${reservas.estadoPago}'),
-            SizedBox(height: 30),
-            SizedBox(
-  width: double.infinity,
-  child: ElevatedButton(
-    style: ElevatedButton.styleFrom(
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      backgroundColor: Colors.black,
-    ),
-    onPressed: () {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => EditReservationScreen(reservas: reservas),
-    ),
-  );
-},
-
-    child: const Text(
-      'Actualizar reserva',
-      style: TextStyle(
-        color: Colors.white,
-        fontSize: 20,
-        fontWeight: FontWeight.w700,
-      ),
-    ),
-  ),
+  crossAxisAlignment: CrossAxisAlignment.start,
+  children: [
+    _buildDetailRow('Nombre del alojamiento', reservas.tituloAlojamiento.toString().split(' ')[0]),
+    _buildDetailRow('Check-in', reservas.fechaCheckIn.toLocal().toString().split(' ')[0]),
+    _buildDetailRow('Check-out', reservas.fechaCheckOut.toLocal().toString().split(' ')[0]),
+    _buildDetailRow('Huéspedes', reservas.numeroHuespedes.toString()),
+    _buildDetailRow('Precio total', '\$${reservas.precioTotal}'),
+    _buildDetailRow('Estado', reservas.estadoReserva),
+    _buildDetailRow('Pago', reservas.estadoPago),
+    const SizedBox(height: 50),
+    _buildActionButton('Actualizar reserva', Colors.black, () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => EditReservationScreen(reservas: reservas),
+        ),
+      );
+    }),
+    const SizedBox(height: 16),
+    _buildActionButton('Cancelar reserva', Colors.red.shade700, () {
+      _confirmarEliminar(context, reservas.id);
+    }),
+  ],
 ),
-SizedBox(height: 30),
-SizedBox(
-  width: double.infinity,
-  child: ElevatedButton(
-    style: ElevatedButton.styleFrom(
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      backgroundColor: Colors.black,
-    ),
-    onPressed: () => _confirmarEliminar(context, reservas.id),
-    child: const Text(
-      'Cancelar reserva',
-      style: TextStyle(
-        color: Colors.white,
-        fontSize: 20,
-        fontWeight: FontWeight.w700,
-      ),
-    ),
-  ),
-),
-
-        ]
-      )
       
       )
       
     );
 
-  }
+  }}
+Widget _buildDetailRow(String label, String value) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 6),
+    child: Row(
+      children: [
+        Text(
+          '$label: ',
+          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: const TextStyle(color: Colors.black87 , fontSize: 22),
+          ),
+        ),
+      ],
+    ),
+  );
+}
 
+Widget _buildActionButton(String text, Color color, VoidCallback onPressed) {
+  return SizedBox(
+    width: double.infinity,
+    child: ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        backgroundColor: color,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+        ),
+        elevation: 3,
+      ),
+      onPressed: onPressed,
+      child: Text(
+        text,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    ),
+  );
 }

@@ -67,9 +67,12 @@ class _EditReservationScreenState extends State<EditReservationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Editar reserva')),
+      appBar: AppBar(title: const Text(
+          'Editar reserva',
+          style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+        )),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         child: Form(
           key: _formKey,
           child: Column(
@@ -80,24 +83,26 @@ class _EditReservationScreenState extends State<EditReservationScreen> {
                 'Ingresa el número de personas',
                 isNumeric: true,
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 30),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
                     backgroundColor: Colors.black,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    elevation: 3,
                   ),
                   onPressed: _saveChanges,
                   child: const Text(
-                    'Actualizar reserva',
+                    'Actualizar Reserva',
                     style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
                       color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.5,
                     ),
                   ),
                 ),
@@ -117,14 +122,24 @@ class _EditReservationScreenState extends State<EditReservationScreen> {
     int? maxHuespedes,
   }) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 14.0),
+      padding: const EdgeInsets.only(bottom: 20),
       child: TextFormField(
         controller: controller,
         keyboardType: isNumeric ? TextInputType.number : TextInputType.text,
+        style: const TextStyle(fontSize: 16),
         decoration: InputDecoration(
           labelText: label,
           hintText: hint,
-          border: const OutlineInputBorder(),
+          labelStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+          hintStyle: const TextStyle(color: Colors.grey),
+          contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderSide: const BorderSide(color: Colors.black, width: 1.5),
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
         validator: (value) {
           if (value == null || value.isEmpty) {

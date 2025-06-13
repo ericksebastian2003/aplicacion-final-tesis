@@ -140,27 +140,11 @@ class _AccountAdminScreenState extends State<AccountAdminScreen> {
                       );
                     },
                   ),
-                  const Divider(),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'Opciones de pago',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-                  ),
-                  const Divider(),
-                  ListTile(
-                    leading: const Icon(Icons.payments_rounded),
-                    title: const Text('Mi saldo'),
-                    onTap: () {
-                      // Implementa la funcionalidad aquí
-                    },
-                  ),
-                  const Divider(),
                   const SizedBox(height: 10),
                   const Text(
                     'Cerrar sesión',
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
                   ),
-              
                   const Divider(),
                   ListTile(
                     leading: const Icon(Icons.logout_outlined),
