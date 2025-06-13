@@ -1,7 +1,7 @@
 import 'package:desole_app/services/auth_service.dart';
 import 'package:desole_app/role/auth/login_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({Key? key}) : super(key: key);
 
@@ -11,176 +11,177 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  final Color colorPrimary = const Color(0xFF001D5A);
+  final Color primaryColor = const Color(0xFF001D5A);
+  bool loading = false;
+  bool showPassword = false;
+
   final Map<String, TextEditingController> _controllers = {
     'nombre': TextEditingController(),
     'apellido': TextEditingController(),
     'telefono': TextEditingController(),
+    'cedula': TextEditingController(),
     'email': TextEditingController(),
-    'cedula' : TextEditingController(),
     'password': TextEditingController(),
   };
+
   final authService = AuthService();
-  final Map<String, FocusNode> _focusNodes = {
-    'nombre': FocusNode(),
-    'apellido': FocusNode(),
-    'telefono': FocusNode(),
-    'email': FocusNode(),
-    'cedula' : FocusNode(),
-    'password': FocusNode(),
-  };
 
-  DateTime? _dateSelected;
-  bool loading = false;
+  void register() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => loading = true);
 
-  /*Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime(2000),
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
-      helpText: 'Selecciona tu fecha de nacimiento',
-    );
-    if (picked != null && picked != _dateSelected) {
-      setState(() {
-        _dateSelected = picked;
-      });
-    }
-  }
-  */
+    final userData = {
+      'nombre': _controllers['nombre']!.text.trim(),
+      'apellido': _controllers['apellido']!.text.trim(),
+      'telefono': _controllers['telefono']!.text.trim(),
+      'cedula': _controllers['cedula']!.text.trim(),
+      'email': _controllers['email']!.text.trim(),
+      'password': _controllers['password']!.text.trim(),
+    };
 
-  void register(String nombre, String apellido, String telefono, String cedula, String email, String password) async {
-  setState(() => loading = true);
+    final response = await authService.register(userData);
+    setState(() => loading = false);
 
-  final userData = {
-    'nombre': nombre.trim(),
-    'apellido': apellido.trim(),
-    'telefono': telefono.trim(),
-    'email': email.trim(),
-    'cedula': cedula.trim(),
-    'password': password.trim(),
-  };
-
-  print('🔐 Datos enviados para registro: $userData');
-
-  final response = await authService.register(userData);
-
-  print('✅ Respuesta del servicio: $response');
-
-  setState(() => loading = false);
-
-  if (response['status'] == 'success') {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(response['msg'] ?? 'Cuenta creada correctamente')),
     );
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => const LoginScreen()),
-    );
-  } else {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(response['msg'] ?? 'Error al registrar usuario')),
-    );
+
+    if (response['status'] == 'success') {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
+    }
   }
-}
 
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+ @override
+Widget build(BuildContext context) {
+  return Scaffold(
+    backgroundColor: Colors.grey[100],
+    body: SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
         child: Form(
           key: _formKey,
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 20),
-              Text(
-                'Crear Cuenta',
-                style: TextStyle(
-                  fontSize: 34,
-                  color: colorPrimary,
-                  fontWeight: FontWeight.bold,
+              // 🔙 Botón de retroceso
+              IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.black87),
+                onPressed: () {
+                  // Puedes usar este si estás navegando desde LoginScreen con pushReplacement
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  );
+                },
+              ),
+
+              const SizedBox(height: 10),
+
+              // 📝 Título
+              Center(
+                child: Text(
+                  'Crear Cuenta',
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: primaryColor,
+                  ),
                 ),
               ),
-              const SizedBox(height: 25),
-              Row(
-                children: [
-                  Expanded(child: _buildPlainField('nombre', 'Nombres', Icon(Icons.person))),
-                  const SizedBox(width: 10),
-                  Expanded(child: _buildPlainField('apellido', 'Apellidos', Icon(Icons.person))),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(child: _buildPlainField('telefono', 'Número de teléfono', Icon(Icons.phone))),
-                  const SizedBox(width: 10),
-                  Expanded(child: _buildPlainField('cedula', 'Numero de cédula', Icon(Icons.numbers))),
-                ],
-              ),
-              const SizedBox(height: 10),
-              _buildPlainField('email', 'Correo electrónico', Icon(Icons.email)),
-              const SizedBox(height: 10),
-              _buildPasswordField('password', 'Contraseña', Icon(Icons.lock)),
-              const SizedBox(height: 30),
-              Center(
-                child: loading
-                    ? const CircularProgressIndicator()
-                    : SizedBox(
-                        width: double.infinity,
-                        height: 55,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            if (_formKey.currentState!.validate()) {
-                              final nombre = _controllers['nombre']!.text.trim();
-                              final apellido = _controllers['apellido']!.text.trim();
-                              final telefono = _controllers['telefono']!.text.trim();
-                              final email = _controllers['email']!.text.trim();
-                              final password = _controllers['password']!.text.trim();
-                              final cedula = _controllers['cedula']!.text.trim();
+              const SizedBox(height: 32),
 
-                              register(nombre, apellido, telefono, cedula, email, password);
-                            }
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: colorPrimary,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+              // 📄 Campos de formulario
+              _buildTextField('nombre', 'Nombres', Icons.person),
+              const SizedBox(height: 16),
+              _buildTextField('apellido', 'Apellidos', Icons.person_outline),
+              const SizedBox(height: 16),
+              _buildTextField('telefono', 'Teléfono', Icons.phone,
+                  isNumeric: true, exactLength: 10),
+              const SizedBox(height: 16),
+              _buildTextField('cedula', 'Cédula', Icons.badge,
+                  isNumeric: true, exactLength: 10),
+              const SizedBox(height: 16),
+              _buildTextField('email', 'Correo Electrónico', Icons.email),
+              const SizedBox(height: 16),
+              _buildPasswordField(),
+              const SizedBox(height: 32),
+
+              // 🔘 Botón registrar
+              loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: register,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryColor,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
                           ),
-                          child: const Text(
-                            'Registrar',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
+                          elevation: 4,
+                        ),
+                        child: const Text(
+                          'Registrar',
+                          style: TextStyle(fontSize: 18, color: Colors.white),
                         ),
                       ),
-              ),
+                    ),
             ],
           ),
         ),
       ),
+    ),
+  );
+}
+
+
+  Widget _buildTextField(String key, String label, IconData icon,
+      {bool isNumeric = false, int? exactLength}) {
+    return TextFormField(
+      controller: _controllers[key],
+      keyboardType: isNumeric ? TextInputType.number : TextInputType.text,
+      decoration: InputDecoration(
+        prefixIcon: Icon(icon),
+        hintText: label,
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+      validator: (value) {
+        if (value == null || value.trim().isEmpty) {
+          return 'Este campo es obligatorio';
+        }
+        if (isNumeric && exactLength != null && value.trim().length != exactLength) {
+          return 'Debe tener exactamente $exactLength dígitos';
+        }
+        return null;
+      },
     );
   }
 
-  Widget _buildPlainField(String key, String hint, Icon? iconField) {
+  Widget _buildPasswordField() {
     return TextFormField(
-      controller: _controllers[key],
-      focusNode: _focusNodes[key],
+      controller: _controllers['password'],
+      obscureText: !showPassword,
       decoration: InputDecoration(
-        prefixIcon: iconField,
-        hintText: hint,
+        prefixIcon: const Icon(Icons.lock),
+        hintText: 'Contraseña',
         filled: true,
         fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Colors.grey),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        suffixIcon: IconButton(
+          icon: Icon(showPassword ? Icons.visibility_off : Icons.visibility),
+          onPressed: () => setState(() => showPassword = !showPassword),
         ),
       ),
       validator: (value) {
@@ -189,26 +190,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
         }
         return null;
       },
-    );
-  }
-
-  Widget _buildPasswordField(String key, String hint, Icon? iconField) {
-    return TextFormField(
-      controller: _controllers[key],
-      focusNode: _focusNodes[key],
-      obscureText: true,
-      decoration: InputDecoration(
-        hintText: hint,
-        filled: true,
-        fillColor: Colors.white,
-        prefixIcon: iconField,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-      ),
-      validator: (value) =>
-          value == null || value.isEmpty ? 'Este campo es obligatorio' : null,
     );
   }
 }

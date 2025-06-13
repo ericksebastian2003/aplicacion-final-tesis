@@ -40,27 +40,28 @@ class _DetailReserveState extends State<DetailReserve> {
   }
 
   Widget _buildInfoRow(IconData icon, String label, String value, {Color? valueColor}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        children: [
-          Icon(icon, size: 22, color: Colors.blueAccent),
-          const SizedBox(width: 12),
-          Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(
-              value,
-              style: TextStyle(
-                fontWeight: FontWeight.w500,
-                color: valueColor ?? Colors.black87,
-              ),
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 6),
+    child: Row(
+      children: [
+        Icon(icon, size: 22, color: Colors.grey[600]), // Aquí el color gris
+        const SizedBox(width: 12),
+        Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            value,
+            style: TextStyle(
+              fontWeight: FontWeight.w500,
+              color: valueColor ?? Colors.black87,
             ),
           ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
+
 
   Widget _buildStatusChip(String label, Color color) {
     return Container(
@@ -111,7 +112,7 @@ class _DetailReserveState extends State<DetailReserve> {
                             'Detalles de la Reserva',
                             style: Theme.of(context).textTheme.titleLarge?.copyWith(
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.blueAccent,
+                                  color: Colors.black,
                                 ),
                           ),
                           const Divider(height: 25, thickness: 2),
@@ -146,7 +147,7 @@ class _DetailReserveState extends State<DetailReserve> {
                     'Pagos realizados',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: Colors.blueAccent,
+                          color: Colors.black,
                         ),
                   ),
                   const SizedBox(height: 12),
@@ -164,13 +165,6 @@ class _DetailReserveState extends State<DetailReserve> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                'Pago',
-                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.green[700],
-                                    ),
-                              ),
                               const SizedBox(height: 10),
                               _buildInfoRow(
                                   Icons.monetization_on,
