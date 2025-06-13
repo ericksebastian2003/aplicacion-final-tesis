@@ -1,6 +1,7 @@
+import 'package:desole_app/role/guest/dashboard/guest_dashboard.dart';
 import 'package:flutter/material.dart';
 import 'package:desole_app/services/pays_services.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
 class PayAccomodation extends StatefulWidget {
   final int noches;
   final int precioPorNoche;
@@ -27,26 +28,47 @@ class _PayAccomodationState extends State<PayAccomodation> {
   bool isLoading = false;
 
   Future<void> _confirmarPago() async {
-    setState(() => isLoading = true);
+  setState(() => isLoading = true);
 
-    final paysService = PaysServices();
-    final pago = await paysService.createPay(widget.idReserva);
+  final paysService = PaysServices();
+  final response = await paysService.createPay(widget.idReserva);
 
-    setState(() => isLoading = false);
+  setState(() => isLoading = false);
 
-    if (pago != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('✅ Transferencia realizada exitosamente')),
-      );
-      Navigator.pop(context, true);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('❌ Error al realizar la transferencia')),
-      );
-    }
+  if (response != null) {
+    // Mostrar el mensaje recibido del backend
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('✅ ${response.msg}')),
+    );
+
+    // Obtener datos del usuario
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('userId');
+    final name = prefs.getString('userName');
+    final rol = prefs.getString('userRole');
+
+    // Redirigir limpiando la pila
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(
+        builder: (_) => GuestDashboard(
+          nombre: name!,
+          rol: rol!
+        ),
+      ),
+      (route) => false, // Esta línea limpia todas las rutas anteriores
+    );
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('❌ Error al realizar la transferencia')),
+    );
   }
+}
 
-  Widget _buildDetailRow(String label, String value, {Color? valueColor, double? valueFontSize}) {
+
+
+  Widget _buildDetailRow(String label, String value,
+      {Color? valueColor, double? valueFontSize}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
@@ -78,10 +100,11 @@ class _PayAccomodationState extends State<PayAccomodation> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Transferencia Bancaria'),
+        title: const Text(
+          'Pago del alojamiento',
+          style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+        ),
         centerTitle: true,
-        backgroundColor: Colors.green.shade700,
-        elevation: 2,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new),
           onPressed: isLoading ? null : () => Navigator.pop(context, false),
@@ -111,7 +134,7 @@ class _PayAccomodationState extends State<PayAccomodation> {
                       const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
                   child: Column(
                     children: [
-                      _buildDetailRow('Titular de la cuenta:', widget.nombreDuenio),
+                      _buildDetailRow('Cuenta:', widget.nombreDuenio),
                       _buildDetailRow('Alojamiento:', widget.alojamiento),
                       _buildDetailRow(
                           'Concepto:', 'Reserva por ${widget.noches} noches'),
@@ -145,7 +168,8 @@ class _PayAccomodationState extends State<PayAccomodation> {
                     : const Icon(Icons.check_circle_outline, size: 26),
                 label: Text(
                   isLoading ? 'Procesando...' : 'Confirmar Transferencia',
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
@@ -157,11 +181,25 @@ class _PayAccomodationState extends State<PayAccomodation> {
                 ),
               ),
               const SizedBox(height: 16),
-              TextButton(
-                onPressed: isLoading ? null : () => Navigator.pop(context, false),
+              // Botón Cancelar mejorado
+              OutlinedButton(
+                onPressed: isLoading
+                    ? null
+                    : () {
+                        print('Cancelar pulsado');
+                        Navigator.pop(context, false);
+                      },
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: Colors.grey.shade400),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14)),
+                  foregroundColor: Colors.black87,
+                ),
                 child: const Text(
                   'Cancelar',
-                  style: TextStyle(fontSize: 16, color: Colors.black54),
+                  style: TextStyle(fontSize: 16),
                 ),
               ),
             ],

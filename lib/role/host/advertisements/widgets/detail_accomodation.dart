@@ -18,6 +18,8 @@ class _DetailAccomodationScreenState extends State<DetailAccomodationScreen> {
   Alojamiento? accommodation;
   List<FotosAlojamientos> fotos = [];
   bool isLoading = true;
+  PageController _pageController = PageController();
+  int _currentPage = 0;
 
   final AccomodationServices _service = AccomodationServices();
 
@@ -25,6 +27,12 @@ class _DetailAccomodationScreenState extends State<DetailAccomodationScreen> {
   void initState() {
     super.initState();
     fetchAlojamientoDetail();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
   }
 
   Future<void> fetchAlojamientoDetail() async {
@@ -45,7 +53,6 @@ class _DetailAccomodationScreenState extends State<DetailAccomodationScreen> {
       });
     }
   }
-
 
   String capitalizar(String texto) {
     return texto.split(' ').map((word) {
@@ -102,58 +109,17 @@ class _DetailAccomodationScreenState extends State<DetailAccomodationScreen> {
     }
   }
 
-  Widget buildImageGallery(List<String> fotos) {
-    if (fotos.isEmpty) {
-      return const Text('Sin fotos disponibles');
-    }
-
-    return SizedBox(
-      height: 250,
-      child: PageView.builder(
-        itemCount: fotos.length,
-        controller: PageController(viewportFraction: 0.85),
-        itemBuilder: (context, index) {
-          final imageUrl = fotos[index];
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: Image.network(
-                imageUrl,
-                fit: BoxFit.cover,
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return Center(
-                    child: CircularProgressIndicator(
-                      value: loadingProgress.expectedTotalBytes != null
-                          ? loadingProgress.cumulativeBytesLoaded /
-                              (loadingProgress.expectedTotalBytes ?? 1)
-                          : null,
-                    ),
-                  );
-                },
-                errorBuilder: (context, error, stackTrace) =>
-                    const Icon(Icons.broken_image, size: 50),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // AppBar transparente para que la imagen sea protagonista
       appBar: AppBar(
+        
+        backgroundColor: Colors.white.withOpacity(0.9),
         title: Text(
-          accommodation != null ? capitalizar(accommodation!.titulo) : 'Detalle',
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 26,
+          capitalizar(accommodation!.titulo),
+          style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
           ),
-        ),
-        backgroundColor: Colors.transparent,
         actions: [
           if (accommodation != null)
             PopupMenuButton<String>(
@@ -162,6 +128,7 @@ class _DetailAccomodationScreenState extends State<DetailAccomodationScreen> {
                   _confirmarEliminar(context, accommodation!.id);
                 }
               },
+              icon: const Icon(Icons.more_vert, color: Colors.black87),
               itemBuilder: (BuildContext context) => [
                 const PopupMenuItem<String>(
                   value: 'delete',
@@ -172,155 +139,211 @@ class _DetailAccomodationScreenState extends State<DetailAccomodationScreen> {
         ],
       ),
       body: isLoading
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 10),
-                  Text("Cargando alojamiento..."),
-                ],
-              ),
-            )
+          ? const Center(child: CircularProgressIndicator())
           : accommodation == null
               ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text('No se pudo cargar el alojamiento'),
+                      const Text(
+                        'No se pudo cargar el alojamiento',
+                        style: TextStyle(fontSize: 18),
+                      ),
                       const SizedBox(height: 20),
                       ElevatedButton(
                         onPressed: fetchAlojamientoDetail,
                         child: const Text('Reintentar'),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          textStyle: const TextStyle(fontSize: 16),
+                        ),
                       ),
                     ],
                   ),
                 )
-              : Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                         if (fotos.isNotEmpty) ...[
-                          SizedBox(
-                            height: 220,
-                            child: ListView.builder(
-                              scrollDirection: Axis.horizontal,
+              : Stack(
+                  children: [
+                    // Carrusel de imágenes con sombra y bordes redondeados
+                    if (fotos.isNotEmpty)
+                      SizedBox(
+                        height: 320,
+                        child: Stack(
+                          children: [
+                            PageView.builder(
+                              controller: _pageController,
                               itemCount: fotos.length,
+                              onPageChanged: (index) {
+                                setState(() {
+                                  _currentPage = index;
+                                });
+                              },
                               itemBuilder: (context, index) {
-                                final foto = fotos[index];
                                 return Padding(
-                                  padding: const EdgeInsets.only(right: 8.0),
+                                  padding: const EdgeInsets.symmetric(horizontal: 12),
                                   child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(12),
-                                    child: Image.network(
-                                      foto.urlFoto,
-                                      width: 300,
-                                      height: 200,
-                                      fit: BoxFit.cover,
-                                      loadingBuilder: (context, child, loadingProgress) {
-                                        if (loadingProgress == null) return child;
-                                        return const Center(child: CircularProgressIndicator());
-                                      },
-                                      errorBuilder: (context, error, stackTrace) =>
-                                          const Icon(Icons.broken_image, size: 80),
+                                    borderRadius: BorderRadius.circular(24),
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black26,
+                                            blurRadius: 8,
+                                            offset: Offset(0, 4),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Image.network(
+                                        fotos[index].urlFoto,
+                                        width: double.infinity,
+                                        fit: BoxFit.cover,
+                                        loadingBuilder: (context, child, loadingProgress) =>
+                                            loadingProgress == null
+                                                ? child
+                                                : const Center(child: CircularProgressIndicator()),
+                                        errorBuilder: (_, __, ___) =>
+                                            const Icon(Icons.broken_image, size: 80, color: Colors.grey),
+                                      ),
                                     ),
                                   ),
                                 );
                               },
                             ),
-                          ),
-                         ],
-                        const Text(
-                          "Descripción",
-                          style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          accommodation?.descripcion ?? 'Sin descripción',
-                          style: const TextStyle(fontSize: 24),
-                        ),
-                        const SizedBox(height: 16),
-
-                        const Text(
-                          "Tipo de Alojamiento",
-                          style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
-                        ),
-                        Text(
-                          capitalizar(accommodation?.tipoAlojamiento ?? ''),
-                          style: const TextStyle(fontSize: 24),
-                        ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          'Precio por noche:',
-                          style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
-                        ),
-                        Text(
-                          '\$${accommodation?.precioNoche ?? '0'}',
-                          style: const TextStyle(fontSize: 24),
-                        ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          'Máximo de huéspedes:',
-                          style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
-                        ),
-                        Text(
-                          '${accommodation?.maxHuespedes ?? '0'}',
-                          style: const TextStyle(fontSize: 24),
-                        ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          'Dirección:',
-                          style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
-                        ),
-                        Text(
-                          '${accommodation?.direccion ?? ''}, ${accommodation?.ciudad ?? ''}, ${accommodation?.provincia ?? ''}, ${accommodation?.pais ?? ''}',
-                          style: const TextStyle(fontSize: 24),
-                        ),
-                        const SizedBox(height: 24),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              backgroundColor: Colors.black,
-                            ),
-                            onPressed: () async {
-                              if (accommodation == null) return;
-
-                              print('🚀 Enviando alojamiento a editar: ${jsonEncode(accommodation!.toJson())}');
-
-                              final result = await Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => EditAccommodationScreen(
-                                    alojamiento: accommodation!,
+                            // Indicador de páginas más visible y estilizado
+                            Positioned(
+                              bottom: 20,
+                              left: 0,
+                              right: 0,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: List.generate(
+                                  fotos.length,
+                                  (index) => AnimatedContainer(
+                                    duration: const Duration(milliseconds: 350),
+                                    margin: const EdgeInsets.symmetric(horizontal: 6),
+                                    width: _currentPage == index ? 16 : 10,
+                                    height: 10,
+                                    decoration: BoxDecoration(
+                                      color: _currentPage == index
+                                          ? Colors.white
+                                          : Colors.white70,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
                                   ),
                                 ),
-                              );
-
-                              if (result == true) {
-                                fetchAlojamientoDetail(); // Recarga al volver si se editó
-                              }
-                            },
-                            child: const Text(
-                              'Editar Alojamiento',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.w700,
                               ),
                             ),
-                          ),
+                          ],
                         ),
-                      ],
+                      ),
+
+                    // Contenido flotante con fondo blanco y bordes redondeados
+                    DraggableScrollableSheet(
+                      initialChildSize: 0.7,
+                      minChildSize: 0.65,
+                      maxChildSize: 0.95,
+                      builder: (_, controller) => Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+                          boxShadow: [BoxShadow(blurRadius: 15, color: Colors.black12)],
+                        ),
+                        child: ListView(
+                          controller: controller,
+                          physics: const BouncingScrollPhysics(),
+                          children: [
+                            _buildTitle("Tipo de alojamiento"),
+                            const SizedBox(height: 6),
+                            Text(
+                              capitalizar(accommodation!.tipoAlojamiento),
+                              style: const TextStyle(fontSize: 16, color: Colors.black87),
+                            ),
+                            const Divider(height: 32, thickness: 1.2),
+                            _buildTitle("Descripción"),
+                            const SizedBox(height: 6),
+                            Text(
+                              accommodation!.descripcion.isNotEmpty
+                                  ? accommodation!.descripcion
+                                  : 'Sin descripción',
+                              style: const TextStyle(fontSize: 16, color: Colors.black87, height: 1.4),
+                            ),
+                            const SizedBox(height: 6),
+
+                            _buildTitle("Precio por noche"),
+                            const SizedBox(height: 6),
+                            Text(
+                              "\$${accommodation!.precioNoche}",
+                              style: const TextStyle(fontSize: 16, color: Colors.black87),
+                            ),
+                            const Divider(height: 32, thickness: 1.2),
+                            _buildTitle("Máximo de huéspedes"),
+                            const SizedBox(height: 6),
+                            Text(
+                              "${accommodation!.maxHuespedes}",
+                              style: const TextStyle(fontSize: 16, color: Colors.black87),
+                            ),
+                            const Divider(height: 32, thickness: 1.2),
+                            _buildTitle("Dirección"),
+                            const SizedBox(height: 6),
+                            Text(
+                              '${capitalizar(accommodation!.direccion)}, '
+                              '${capitalizar(accommodation!.ciudad)}, '
+                              '${capitalizar(accommodation!.provincia)}, '
+                              '${capitalizar(accommodation!.pais)}',
+                              style: const TextStyle(fontSize: 16, color: Colors.black87),
+                            ),
+                            const SizedBox(height: 32),
+
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(vertical: 18),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  backgroundColor: Colors.black,
+                                ),
+                                onPressed: () async {
+                                  print('🚀 Enviando alojamiento a editar: ${jsonEncode(accommodation!.toJson())}');
+
+                                  final result = await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => EditAccommodationScreen(
+                                        alojamiento: accommodation!,
+                                      ),
+                                    ),
+                                  );
+
+                                  if (result == true) {
+                                    fetchAlojamientoDetail(); // Recarga si hubo edición
+                                  }
+                                },
+                                child: const Text(
+                                  'Editar alojamiento',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
+    );
+  }
+
+  Widget _buildTitle(String text) {
+    return Text(
+      text,
+      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87),
     );
   }
 }

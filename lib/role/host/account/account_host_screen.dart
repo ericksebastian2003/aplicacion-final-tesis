@@ -1,9 +1,7 @@
-import 'dart:convert';
 import 'package:desole_app/role/admin/account/profile_admin_screen.dart';
 import 'package:desole_app/role/guest/dashboard/guest_dashboard.dart';
-import 'package:desole_app/role/guest/profile/widgets/profile_guest_screen.dart';
-import 'package:desole_app/role/host/account/widgets/profile_host_screen.dart';
 import 'package:desole_app/providers/session_provider.dart';
+import 'package:desole_app/role/host/account/widgets/saldo_page_admin.dart';
 import 'package:desole_app/services/users_services.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -126,7 +124,7 @@ class _AccountHostScreenState extends State<AccountHostScreen> {
       appBar: AppBar(
         title: const Text(
           'Cuenta',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.transparent,
       ),
@@ -171,7 +169,7 @@ class _AccountHostScreenState extends State<AccountHostScreen> {
                     ],
                   ),
                   const SizedBox(height: 20),
-                  const Text(
+                     const Text(
                     'Opciones de Usuario',
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
                   ),
@@ -181,11 +179,11 @@ class _AccountHostScreenState extends State<AccountHostScreen> {
                     title: const Text('Editar Perfil'),
                     onTap: () {
                       Navigator.of(context).push(
-                        MaterialPageRoute(builder: (context) => ProfileHostScreen()),
+                        MaterialPageRoute(builder: (context) => ProfileAdminScreen()),
                       );
                     },
                   ),
-                  const Divider(),
+          
                   const SizedBox(height: 10),
                   const Text(
                     'Opciones de pago',
@@ -193,11 +191,30 @@ class _AccountHostScreenState extends State<AccountHostScreen> {
                   ),
                   const Divider(),
                   ListTile(
+                    leading: const Icon(Icons.attach_money_rounded),
+                    title: const Text('Mis ganancias'),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (context) => SaldoPageAdmin()),
+                      );
+                    }
+                    ),
+                  
+                   /*ListTile(
                     leading: const Icon(Icons.payments_rounded),
                     title: const Text('Mis pagos'),
-                    onTap: () {
-                      // Implementa la funcionalidad aquí
-                    },
+                    onTap:  () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (context) => MyPaysAdmin()),
+                      );
+                    }
+                    ),
+                 */
+                  
+                  const SizedBox(height: 10),
+                  const Text(
+                    'Cerrar sesión',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
                   ),
                   const Divider(),
                   ListTile(

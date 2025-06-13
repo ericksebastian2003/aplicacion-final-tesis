@@ -29,8 +29,13 @@ class Pagos {
   factory Pagos.fromJson(Map<String, dynamic> json) {
     return Pagos(
       reserva: Reservas.fromJson(json['reserva']),
-      huesped: Usuarios.fromJson(json['huesped']),
-      anfitrion: Usuarios.fromJson(json['anfitrion']),
+     huesped: json['huesped'] is Map<String, dynamic>
+        ? Usuarios.fromJson(json['huesped'])
+        : Usuarios(id: json['huesped'], rol: [], nombre: '', apellido: '', cedula: 0, email: '', token: '', telefono: 0),
+    anfitrion: json['anfitrion'] is Map<String, dynamic>
+        ? Usuarios.fromJson(json['anfitrion'])
+        : Usuarios(id: json['anfitrion'], rol: [], nombre: '', apellido: '', cedula: 0, email: '', token: '', telefono: 0),
+
       montoFinal: (json['montoTotal'] ?? 0).toDouble(),
       comisionSistema: (json['comisionSistema'] ?? 0).toDouble(),
       montoAnfitrion: (json['montoAnfitrion'] ?? 0).toDouble(),

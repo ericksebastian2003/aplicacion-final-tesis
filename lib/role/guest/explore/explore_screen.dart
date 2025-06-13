@@ -4,17 +4,15 @@ import 'package:flutter/material.dart';
 
 import '../../../data/models/Alojamientos.dart';
 
-class ExploreScreen extends StatefulWidget{
-
+class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});
 
-    @override
+  @override
   State<ExploreScreen> createState() => _ExploreScreenState();
 }
 
 class _ExploreScreenState extends State<ExploreScreen> {
-
-   final AccomodationServices _service = AccomodationServices();
+  final AccomodationServices _service = AccomodationServices();
   late Future<List<Alojamiento>> _futureAccommodations;
 
   @override
@@ -42,11 +40,22 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 } else if (snapshot.hasError) {
-                  return Center(child: Text('Error al cargar la información: ${snapshot.error}'));
+                  return Center(
+                      child:
+                          Text('Error al cargar la información: ${snapshot.error}'));
                 } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                   return const Center(child: Text('No hay alojamientos disponibles.'));
                 } else {
-                  final accommodations = snapshot.data!;
+                  // Filtrar solo alojamientos con estado "activo"
+                  final accommodations = snapshot.data!
+                      .where((a) => a.estadoAlojamiento.toLowerCase() == 'activo')
+                      .toList();
+
+                  if (accommodations.isEmpty) {
+                    return const Center(
+                        child: Text('No hay alojamientos activos disponibles.'));
+                  }
+
                   return ListView.builder(
                     itemCount: accommodations.length,
                     itemBuilder: (context, index) {
@@ -60,7 +69,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
           ),
         ],
       ),
-    
     );
   }
 }
@@ -89,7 +97,7 @@ class _CardAccomodationsState extends State<CardAccomodations> {
     try {
       final fotos = await _service.getPhotosAccommodations(widget.destino.id);
       if (fotos.isNotEmpty) {
-        // Puedes mostrar la que tiene fotoPrincipal == true, o simplemente la primera
+        // Mostrar la foto principal si existe, sino la primera
         final fotoPrincipal = fotos.firstWhere(
           (foto) => foto.fotoPrincipal == true,
           orElse: () => fotos.first,
@@ -117,7 +125,8 @@ class _CardAccomodationsState extends State<CardAccomodations> {
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => DetailScreen(id: widget.destino.id)),
+          MaterialPageRoute(
+              builder: (context) => DetailScreen(id: widget.destino.id)),
         );
       },
       child: Card(
@@ -134,71 +143,74 @@ class _CardAccomodationsState extends State<CardAccomodations> {
                   )
                 : _firstImageUrl != null
                     ? ClipRRect(
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                      child: FadeInImage.assetNetwork(
-                        placeholder: 'assets/placeholder.jpg', // asegúrate de tener esta imagen en assets
-                        image: _firstImageUrl!,
-                        height: 200,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        fadeInDuration: const Duration(milliseconds: 300),
-                      ),
-                    )
-
+                        borderRadius:
+                            const BorderRadius.vertical(top: Radius.circular(12)),
+                        child: FadeInImage.assetNetwork(
+                          placeholder: 'assets/placeholder.jpg',
+                          image: _firstImageUrl!,
+                          height: 200,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          fadeInDuration: const Duration(milliseconds: 300),
+                        ),
+                      )
                     : const SizedBox(
                         height: 200,
                         child: Center(child: Text('Este alojamiento no tiene imagenes')),
                       ),
             Padding(
-  padding: const EdgeInsets.all(16),
-  child: Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        widget.destino.titulo,
-        style: const TextStyle(
-          fontSize: 22,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-      const SizedBox(height: 8),
-      Row(
-        children: [
-          const Icon(Icons.home_work_outlined, size: 18, color: Colors.grey),
-          const SizedBox(width: 6),
-          Text(widget.destino.tipoAlojamiento),
-        ],
-      ),
-      const SizedBox(height: 6),
-      Row(
-        children: [
-          const Icon(Icons.attach_money, size: 18, color: Colors.grey),
-          const SizedBox(width: 6),
-          Text('Precio por noche: \$${widget.destino.precioNoche.toStringAsFixed(2)}'),
-        ],
-      ),
-      const SizedBox(height: 6),
-      Row(
-        children: [
-          const Icon(Icons.location_on_outlined, size: 18, color: Colors.grey),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text('${widget.destino.ciudad}, ${widget.destino.provincia}, ${widget.destino.pais}'),
-          ),
-        ],
-      ),
-      const SizedBox(height: 6),
-      Row(
-        children: [
-          const Icon(Icons.map_outlined, size: 18, color: Colors.grey),
-          const SizedBox(width: 6),
-          Expanded(child: Text(widget.destino.direccion)),
-        ],
-      ),
-    ],
-  ),
-),
-
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.destino.titulo,
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      const Icon(Icons.home_work_outlined,
+                          size: 18, color: Colors.grey),
+                      const SizedBox(width: 6),
+                      Text(widget.destino.tipoAlojamiento),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      const Icon(Icons.attach_money, size: 18, color: Colors.grey),
+                      const SizedBox(width: 6),
+                      Text(
+                          'Precio por noche: \$${widget.destino.precioNoche.toStringAsFixed(2)}'),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      const Icon(Icons.location_on_outlined,
+                          size: 18, color: Colors.grey),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                            '${widget.destino.ciudad}, ${widget.destino.provincia}, ${widget.destino.pais}'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      const Icon(Icons.map_outlined, size: 18, color: Colors.grey),
+                      const SizedBox(width: 6),
+                      Expanded(child: Text(widget.destino.direccion)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),

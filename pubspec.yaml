@@ -52,7 +52,7 @@ dev_dependencies:
   url_launcher: ^6.2.4
   dio: ^5.4.0
   table_calendar: ^3.0.7
-  
+  dotted_border: ^2.0.0
   #Para las imagenes
   image_picker : ^1.1.0
   #permisos

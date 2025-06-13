@@ -8,6 +8,7 @@ class Alojamiento {
   final String ciudad;
   final String provincia;
   final String pais;
+  final String estadoAlojamiento;
   final String direccion;
   final String anfitrionId; // Solo el ID del anfitrión
 
@@ -22,6 +23,7 @@ class Alojamiento {
     required this.provincia,
     required this.pais,
     required this.direccion,
+    required this.estadoAlojamiento,
     required this.anfitrionId,
   });
 
@@ -35,6 +37,7 @@ class Alojamiento {
       maxHuespedes: int.tryParse(json['maxHuespedes'].toString()) ?? 0,
       ciudad: json['ciudad'] ?? '',
       provincia: json['provincia'] ?? '',
+      estadoAlojamiento: json['estadoAlojamiento'],
       pais: json['pais'] ?? '',
       direccion: json['direccion'] ?? '',
       anfitrionId: json['anfitrion'] is String
@@ -56,6 +59,7 @@ class Alojamiento {
       'pais': pais,
       'direccion': direccion,
       'anfitrion': anfitrionId,
+      'estadoAlojamiento' : estadoAlojamiento,
     };
   }
 

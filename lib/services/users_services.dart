@@ -64,6 +64,32 @@ class UsersServices {
       return  false;
   }
   }
+Future<Map<String, dynamic>?> getBalanceForHost() async {
+  final prefs = await SharedPreferences.getInstance();
+  final token = prefs.getString('token');
+
+  if (token == null) return null;
+
+  _dio.options.headers['Authorization'] = 'Bearer $token';
+
+  try {
+    final response = await _dio.get('https://hospedajes-4rmu.onrender.com/api/pagos/anfitrion/saldo');
+
+    if (response.statusCode == 200) {
+      final data = response.data;
+      if (data != null) {
+        // Retornas todo el mapa con saldoGenerado y pagos
+        return Map<String, dynamic>.from(data);
+      }
+    }
+  } catch (e) {
+    print('❌ Error al obtener perfil: $e');
+  }
+  return null;
+}
+
+
+
 
 
   Future<bool> uploadProfileImage (File? profileImage) async{

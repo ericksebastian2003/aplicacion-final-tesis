@@ -1,54 +1,59 @@
+import 'package:desole_app/data/models/PagoResponmse.dart';
 import 'package:desole_app/data/models/Pagos.dart';
+import 'package:desole_app/data/models/PagosAnfitriones.dart';
+import 'package:desole_app/data/models/PagosHuespedes.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dio/dio.dart';
 import 'package:desole_app/data/models/Reservas.dart';
+  import 'dart:convert';
 
 class PaysServices {
   final String baseUrl = 'https://hospedajes-4rmu.onrender.com/api';
   final Dio dio = Dio();
 
-  Future<Pagos?> createPay(String idReserva) async {
-    print('📡 [CREATE PAY] Iniciando solicitud de pago...');
-    print('🧾 [ID RESERVA] => $idReserva');
 
+Future<PagoResponse?> createPay(String idReserva) async {
+  try {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
 
     if (token == null) {
-      print('❌ [ERROR] No se encontró el token en SharedPreferences');
+      print('❌ [ERROR] Token no encontrado');
       return null;
     }
 
     dio.options.headers['Authorization'] = 'Bearer $token';
-    print('🔐 [TOKEN USADO] => $token');
 
-    try {
-      final response = await dio.post('$baseUrl/pagos/$idReserva');
+    print('📡 [CREATE PAY] Enviando solicitud POST a $baseUrl/pagos/$idReserva');
+    print('🧾 [ID RESERVA] => $idReserva');
 
-      print('📥 [STATUS CODE] => ${response.statusCode}');
-      print('📦 [RESPONSE BODY] => ${response.data}');
+    final response = await dio.post('$baseUrl/pagos/$idReserva');
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        final pago = Pagos.fromJson(response.data['pago']);
-        print('✅ [PAGO CREADO] => ${pago.toJson()}');
-        return pago;
-      } else {
-        print('⚠️ [ERROR] Respuesta inesperada del servidor (status code: ${response.statusCode})');
-        return null;
-      }
-    } on DioException catch (dioError) {
-      print('❌ [DIO ERROR] => ${dioError.message}');
-      if (dioError.response != null) {
-        print('📛 [DIO RESPONSE STATUS] => ${dioError.response?.statusCode}');
-        print('📛 [DIO RESPONSE BODY] => ${dioError.response?.data}');
-      }
-      return null;
-    } catch (e, stackTrace) {
-      print('❌ [ERROR DESCONOCIDO] => $e');
-      print('📌 [STACKTRACE] => $stackTrace');
+    print('📥 [STATUS CODE] => ${response.statusCode}');
+    print('📦 [RESPONSE BODY] => ${response.data}');
+
+    if (response.statusCode == 201) {
+      final data = response.data is String ? jsonDecode(response.data) : response.data;
+
+      final pagoResponse = PagoResponse.fromJson(data);
+
+      print('✅ [MSG] => ${pagoResponse.msg}');
+      print('💰 [MONTO TOTAL] => ${pagoResponse.pago.montoTotal}');
+      print('🏠 [ALOJAMIENTO ID] => ${pagoResponse.pago.reserva}');
+      
+      return pagoResponse;
+    } else {
+      print('❌ [ERROR] Código de estado no esperado: ${response.statusCode}');
       return null;
     }
+  } catch (e, stack) {
+    print('❌ [ERROR DESCONOCIDO] => $e');
+    print('📌 [STACKTRACE] => $stack');
+    return null;
   }
+}
+
+
   Future<List<Pagos>> getPagosComoAnfitrion() async {
   final prefs = await SharedPreferences.getInstance();
   final token = prefs.getString('token');
@@ -80,54 +85,54 @@ class PaysServices {
   }
 }
 
-Future<List<Pagos>> getPagosComoHuesped() async {
-  final prefs = await SharedPreferences.getInstance();
-  final token = prefs.getString('token');
-  final userId = prefs.getString('userId');
-
-  if (token == null || userId == null) {
-    print('❌ [ERROR] Token o userId no encontrados');
-    return [];
-  }
-
-  dio.options.headers['Authorization'] = 'Bearer $token';
-
+Future<List<PagosHuespedes>> getPagosByHuesped() async {
   try {
-    final response = await dio.get('$baseUrl/pagos');
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    dio.options.headers['Authorization'] = 'Bearer $token';
 
-    if (response.statusCode == 200) {
-      print('📦 [RESPUESTA JSON] => ${response.data}');
+    final response = await dio.get('$baseUrl/pagos/huesped/pagos');
 
-      final data = response.data;
-
-      if (data is List) {
-        final pagos = data
-            .whereType<Map<String, dynamic>>()
-            .map((e) => Pagos.fromJson(e))
-            .toList();
-
-        // Filtrar pagos donde el id del huesped dentro de reserva coincide con userId
-        final comoHuesped = pagos.where((pago) {
-          final reserva = pago.reserva;
-          // Asegurar que reserva y reserva.huesped no sean nulos
-          if (reserva != null && reserva.huespedId != null) {
-            return reserva.huespedId == userId;
-          }
-          return false;
-        }).toList();
-
-        print('✅ [PAGOS COMO HUÉSPED] => ${comoHuesped.length}');
-        return comoHuesped;
-      } else {
-        print('❌ [ERROR] El formato del JSON no contiene una lista de pagos');
-        return [];
-      }
+    if (response.statusCode == 200 && response.data['pagos'] != null) {
+      final List<dynamic> pagosJson = response.data['pagos'];
+      // Convertimos cada elemento JSON en un objeto PagosHuespedes
+      List<PagosHuespedes> pagosList = pagosJson.map((p) => PagosHuespedes.fromJson(p)).toList();
+      return pagosList;
     } else {
-      print('⚠️ [ERROR] Código de estado: ${response.statusCode}');
+      print('❌ [ERROR] El formato del JSON no contiene una lista de pagos');
       return [];
     }
   } catch (e) {
-    print('❌ [ERROR GET COMO HUÉSPED] => $e');
+    print('❌ [EXCEPCIÓN getPagosByHuesped] => $e');
+    return [];
+  }
+}
+Future<List<PagosAnfitriones>> getPagosPorReserva(String idReserva) async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    dio.options.headers['Authorization'] = 'Bearer $token';
+
+    final response = await dio.get('$baseUrl/pagos/$idReserva');
+    print('$baseUrl/pagos/$idReserva');
+
+
+    if (response.statusCode == 200) {
+      final data = response.data;
+
+      // Si `data` es una lista
+      if (data is List) {
+        return data.map((e) => PagosAnfitriones.fromJson(e)).toList();
+      }
+
+      // Si es un solo pago (objeto único)
+      return [PagosAnfitriones.fromJson(data)];
+    } else {
+      print('❌ [ERROR] Estado no 200');
+      return [];
+    }
+  } catch (e) {
+    print('❌ [EXCEPCIÓN getPagosPorReserva] => $e');
     return [];
   }
 }

@@ -256,7 +256,7 @@ class _CreateDetailsState extends State<CreateDetails> {
                   return null;
                 },
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 18),
               _buildTextField(
                 label: 'Descripción',
                 controller: _descripcionController,
@@ -268,7 +268,7 @@ class _CreateDetailsState extends State<CreateDetails> {
                 },
                 keyboardType: TextInputType.multiline,
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 18),
               DropdownButtonFormField<String>(
                 decoration: const InputDecoration(
                   labelText: 'Provincia',
@@ -289,7 +289,7 @@ class _CreateDetailsState extends State<CreateDetails> {
                 },
                 validator: (value) => value == null ? 'Selecciona una provincia' : null,
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 18),
               DropdownButtonFormField<String>(
                 decoration: const InputDecoration(
                   labelText: 'Ciudad',
@@ -309,7 +309,7 @@ class _CreateDetailsState extends State<CreateDetails> {
                 },
                 validator: (value) => value == null ? 'Selecciona una ciudad' : null,
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 18),
               _buildTextField(
                 label: 'Dirección',
                 controller: _direccionController,
@@ -320,7 +320,7 @@ class _CreateDetailsState extends State<CreateDetails> {
                   return null;
                 },
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 18),
               _buildTextField(
                 label: 'Precio por noche',
                 controller: _precioController,
@@ -335,7 +335,7 @@ class _CreateDetailsState extends State<CreateDetails> {
                 },
                 keyboardType: TextInputType.number,
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 18),
               _buildTextField(
                 label: 'Máximo de huéspedes',
                 controller: _maxHuespedesController,
@@ -350,7 +350,7 @@ class _CreateDetailsState extends State<CreateDetails> {
                 },
                 keyboardType: TextInputType.number,
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 25),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
