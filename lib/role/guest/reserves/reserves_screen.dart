@@ -12,6 +12,12 @@ class ReservesGuestScreen extends StatefulWidget {
 
 class _ReservesGuestScreenState extends State<ReservesGuestScreen> {
   late Future<List<Reservas>> _futureReservas;
+  void refreshReservations() {
+  setState(() {
+    _futureReservas = ReservesServices().getReservationsForGuest();
+  });
+}
+
 
   @override
   void initState() {
@@ -68,14 +74,21 @@ class CardReserves extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => DetailGuestReservation(reservas: reservas),
-          ),
-        );
-      },
+      onTap: () async {
+  final result = await Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => DetailGuestReservation(reservas: reservas),
+    ),
+  );
+
+  if (result == true) {
+    // Esto actualiza la lista si se eliminó o cambió algo en la pantalla de detalles
+    final parentState = context.findAncestorStateOfType<_ReservesGuestScreenState>();
+    parentState?.refreshReservations();
+  }
+},
+
       child: Card(
         margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),

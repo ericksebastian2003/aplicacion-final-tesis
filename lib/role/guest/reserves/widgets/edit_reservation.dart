@@ -44,7 +44,8 @@ class _EditReservationScreenState extends State<EditReservationScreen> {
       estadoReserva: widget.reservas.estadoReserva,
       estadoPago: widget.reservas.estadoPago,
       nombreHuesped: widget.reservas.nombreHuesped,
-      emailHuesped: widget.reservas.emailHuesped,
+      emailHuesped: widget.reservas.emailHuesped, 
+      alojamientoId: widget.reservas.alojamientoId, 
     );
 
     print('🚀 Enviando reserva a editar: ${updated.toJsonForUpdateGuest()}');

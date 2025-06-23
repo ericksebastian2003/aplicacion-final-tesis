@@ -1,4 +1,4 @@
-import 'package:desole_app/data/providers/form_alojamiento_provider.dart';
+import '../../../../providers/form_alojamiento_provider.dart';
 import 'package:desole_app/role/host/advertisements/widgets/create_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';

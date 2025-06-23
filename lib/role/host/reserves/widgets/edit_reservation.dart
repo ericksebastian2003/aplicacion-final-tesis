@@ -49,7 +49,8 @@ class _EditReservationHostScreenState extends State<EditReservationHostScreen> {
       estadoReserva: estadoReservaController.text,
       estadoPago: estadoPagoController.text,
       nombreHuesped: widget.reservas.nombreHuesped,
-      emailHuesped: widget.reservas.emailHuesped,
+      emailHuesped: widget.reservas.emailHuesped, 
+      alojamientoId: widget.reservas.alojamientoId,
     );
 
     print('🚀 Enviando reserva a editar: ${updated.toJsonForUpdateGuest()}');

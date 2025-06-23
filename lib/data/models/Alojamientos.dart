@@ -5,6 +5,7 @@ class Alojamiento {
   final String tipoAlojamiento;
   final int precioNoche;
   final int maxHuespedes;
+  final double? calificacionPromedio;
   final String ciudad;
   final String provincia;
   final String pais;
@@ -20,6 +21,7 @@ class Alojamiento {
     required this.precioNoche,
     required this.maxHuespedes,
     required this.ciudad,
+    required this.calificacionPromedio,
     required this.provincia,
     required this.pais,
     required this.direccion,
@@ -40,6 +42,7 @@ class Alojamiento {
       estadoAlojamiento: json['estadoAlojamiento'],
       pais: json['pais'] ?? '',
       direccion: json['direccion'] ?? '',
+      calificacionPromedio: json['calificacionPromedio']?.toDouble(),
       anfitrionId: json['anfitrion'] is String
           ? json['anfitrion']
           : (json['anfitrion']?['_id'] ?? ''),

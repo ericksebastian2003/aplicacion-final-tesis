@@ -29,7 +29,8 @@ class _ReservesAdminScreenState extends State<ReservesAdminScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Reservas',
+        title: const Text(
+          'Reservas',
           style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
         ),
       ),
@@ -69,8 +70,8 @@ class CardReserves extends StatelessWidget {
 
   String formatDate(DateTime date) {
     return '${date.day.toString().padLeft(2, '0')}/'
-           '${date.month.toString().padLeft(2, '0')}/'
-           '${date.year}';
+        '${date.month.toString().padLeft(2, '0')}/'
+        '${date.year}';
   }
 
   @override
@@ -94,6 +95,8 @@ class CardReserves extends StatelessWidget {
                     reservas.tituloAlojamiento,
                     style: const TextStyle(
                         fontSize: 18, fontWeight: FontWeight.bold),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
                   ),
                 ),
               ],
@@ -105,76 +108,121 @@ class CardReserves extends StatelessWidget {
               children: [
                 const Icon(Icons.person, size: 20),
                 const SizedBox(width: 6),
-                Text('${reservas.nombreHuesped} (${reservas.emailHuesped})'),
+                Expanded(
+                  child: Text(
+                    '${reservas.nombreHuesped} (${reservas.emailHuesped})',
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 6),
+
             Row(
               children: [
                 const Icon(Icons.calendar_today, size: 20),
                 const SizedBox(width: 6),
-                Text('Fecha de ingreso: ${formatDate(reservas.fechaCheckIn)}'),
-                const SizedBox(width: 12),
-                Text('Fecha de salida: ${formatDate(reservas.fechaCheckOut)}'),
+                Expanded(
+                  child: Text(
+                    'Ingreso: ${formatDate(reservas.fechaCheckIn)}',
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                const SizedBox(width: 26),
+                Expanded(
+                  child: Text(
+                    'Salida: ${formatDate(reservas.fechaCheckOut)}',
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 6),
+
             Row(
               children: [
                 const Icon(Icons.group, size: 20),
                 const SizedBox(width: 6),
-                Text('Huéspedes: ${reservas.numeroHuespedes}'),
+                Expanded(
+                  child: Text(
+                    'Huéspedes: ${reservas.numeroHuespedes}',
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 6),
+
             Row(
               children: [
                 const Icon(Icons.attach_money, size: 20),
                 const SizedBox(width: 6),
-                Text('Total: \$${reservas.precioTotal.toStringAsFixed(2)}'),
+                Expanded(
+                  child: Text(
+                    'Total: \$${reservas.precioTotal.toStringAsFixed(2)}',
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 6),
+
             Row(
               children: [
                 const Icon(Icons.info_outline, size: 20),
                 const SizedBox(width: 6),
-                Text('Estado: ${reservas.estadoReserva}'),
+                Expanded(
+                  child: Text(
+                    'Estado: ${reservas.estadoReserva}',
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
               ],
             ),
             Row(
               children: [
                 const Icon(Icons.payment, size: 20),
                 const SizedBox(width: 6),
-                Text('Pago: ${reservas.estadoPago}'),
+                Expanded(
+                  child: Text(
+                    'Pago: ${reservas.estadoPago}',
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 12),
 
             // Botón "Ver más"
             Align(
-  alignment: Alignment.centerRight,
-  child: OutlinedButton.icon(
-    onPressed: () {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => DetailAdminReserve(reservas: reservas),
-        ),
-      );
-    },
-    icon: const Icon(Icons.arrow_forward, color: Colors.white), // o el icono que prefieras
-    label: const Text(
-      'Ver más',
-      style: TextStyle(color: Colors.white),
-    ),
-    style: OutlinedButton.styleFrom(
-      backgroundColor: Colors.black,
-      side: BorderSide(color: Colors.black), // borde negro (igual al fondo para que no se note)
-    ),
-  ),
-),
-
+              alignment: Alignment.centerRight,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          DetailAdminReserve(reservas: reservas),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.arrow_forward, color: Colors.white),
+                label: const Text(
+                  'Ver más',
+                  style: TextStyle(color: Colors.white),
+                ),
+                style: OutlinedButton.styleFrom(
+                  backgroundColor: Colors.black,
+                  side: const BorderSide(color: Colors.black),
+                ),
+              ),
+            ),
           ],
         ),
       ),

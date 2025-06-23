@@ -15,29 +15,30 @@ class AccomodationServices {
           final prefs = await SharedPreferences.getInstance();
           final token = prefs.getString('token');
 
-          print('👉 PETICIÓN: ${options.method} ${options.uri}');
-          print('👉 Headers antes del token: ${options.headers}');
+         // print('👉 PETICIÓN: ${options.method} ${options.uri}');
+         // print('👉 Headers antes del token: ${options.headers}');
 
           if (token != null) {
             options.headers['Authorization'] = 'Bearer $token';
-            print('🔐 Se agregó el token: $token');
+            //print('🔐 Se agregó el token: $token');
           } else {
-            print('❌ No se encontró token en SharedPreferences');
+           // print('❌ No se encontró token en SharedPreferences');
           }
 
           return handler.next(options);
         },
         onResponse: (response, handler) {
-          print('✅ RESPUESTA [${response.statusCode}]: ${response.requestOptions.uri}');
-          print('📦 Body: ${response.data}');
+          //print('✅ RESPUESTA [${response.statusCode}]: ${response.requestOptions.uri}');
+          //print('📦 Body: ${response.data}');
           return handler.next(response);
         },
         onError: (DioError e, handler) {
-          print('❗ ERROR EN LA RESPUESTA:');
-          print('🔗 URI: ${e.requestOptions.uri}');
-          print('📥 HEADERS: ${e.requestOptions.headers}');
+          //print('❗ ERROR EN LA RESPUESTA:');
+          //print('🔗 URI: ${e.requestOptions.uri}');
+        /*print('📥 HEADERS: ${e.requestOptions.headers}');
           print('📤 BODY: ${e.response?.data}');
           print('🧾 STATUS CODE: ${e.response?.statusCode}');
+          */
           return handler.next(e);
         },
       ),
@@ -48,7 +49,7 @@ class AccomodationServices {
   Future<Alojamiento> getAccommodation(String id) async {
     try {
       final response = await _dio.get('$baseUrl/ver/$id');
-      print("🟢 Respuesta del servidor: ${response.data}");
+      //print("🟢 Respuesta del servidor: ${response.data}");
 
       if (response.statusCode == 200) {
         final data = response.data;
@@ -61,7 +62,7 @@ class AccomodationServices {
         throw Exception('Error al obtener alojamiento: ${response.statusCode}');
       }
     } catch (e) {
-      print("❌ Error al obtener detalle del alojamiento: $e");
+      //print("❌ Error al obtener detalle del alojamiento: $e");
       throw Exception('Error al obtener alojamiento: $e');
     }
   }
@@ -117,13 +118,13 @@ class AccomodationServices {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token') ?? '';
-      print(token);
+      //print(token);
       _dio.options.headers['Authorization'] = 'Bearer $token';
 
       final response = await _dio.delete('$baseUrl/borrar/$id');
       return response.statusCode == 200;
     } catch (e) {
-      print('Error en deleteAccommodation: $e');
+      //print('Error en deleteAccommodation: $e');
       return false;
     }
   }
@@ -135,18 +136,18 @@ class AccomodationServices {
 
     try {
       final response = await _dio.get(url);
-      print('📥 Respuesta completa: ${response.data}');
+      //print('📥 Respuesta completa: ${response.data}');
 
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data;
-        print('📸 Número de fotos recibidas: ${data.length}');
+       // print('📸 Número de fotos recibidas: ${data.length}');
         return data.map((json) => FotosAlojamientos.fromJson(json)).toList();
       } else {
-        print('⚠️ Código de estado inesperado: ${response.statusCode}');
+       // print('⚠️ Código de estado inesperado: ${response.statusCode}');
         throw Exception('Error en la respuesta del servidor: ${response.statusCode}');
       }
     } catch (e) {
-      print('❌ Error al cargar las fotos de los alojamientos: $e');
+      //print('❌ Error al cargar las fotos de los alojamientos: $e');
       throw Exception('Error al cargar las fotos de los alojamientos: $e');
     }
   }
@@ -159,11 +160,11 @@ class AccomodationServices {
       _dio.options.headers['Authorization'] = 'Bearer $token';
 
       final response = await _dio.delete('$baseUrl/fotos/$idFoto');
-      print('🗑️ Eliminando foto ID: $idFoto');
-      print('📤 Status: ${response.statusCode}');
+      //print('🗑️ Eliminando foto ID: $idFoto');
+      //print('📤 Status: ${response.statusCode}');
       return response.statusCode == 200;
     } catch (e) {
-      print('❌ Error al eliminar la foto: $e');
+      //print('❌ Error al eliminar la foto: $e');
       return false;
     }
   }
@@ -189,7 +190,7 @@ class AccomodationServices {
 
     return response.statusCode == 201 || response.statusCode == 200;
   } catch (e) {
-    print('Error al subir foto: $e');
+    //print('Error al subir foto: $e');
     return false;
   }
 }
@@ -206,7 +207,7 @@ class AccomodationServices {
         'fotos': fotos,
       };
     } catch (e) {
-      print('❌ Error al obtener alojamiento con fotos: $e');
+      //print('❌ Error al obtener alojamiento con fotos: $e');
       throw Exception('Error al obtener alojamiento con fotos: $e');
     }
   }

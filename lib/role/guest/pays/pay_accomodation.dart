@@ -1,23 +1,31 @@
-import 'package:desole_app/role/guest/dashboard/guest_dashboard.dart';
-import 'package:flutter/material.dart';
 import 'package:desole_app/services/pays_services.dart';
+import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:desole_app/role/guest/dashboard/guest_dashboard.dart';
+
 class PayAccomodation extends StatefulWidget {
   final int noches;
   final int precioPorNoche;
   final int precioTotal;
-  final String nombreDuenio;
-  final String alojamiento;
-  final String idReserva;
+  final String duenio;
+  final String alojamientoId;
+  final String huespedId;
+  final DateTime fechaCheckIn;
+  final DateTime fechaCheckOut;
+  final int cantidadHuespedes;
 
   const PayAccomodation({
     super.key,
     required this.noches,
     required this.precioPorNoche,
     required this.precioTotal,
-    required this.nombreDuenio,
-    required this.alojamiento,
-    required this.idReserva,
+    required this.duenio,
+    required this.alojamientoId,
+    required this.huespedId,
+    required this.fechaCheckIn,
+    required this.fechaCheckOut,
+    required this.cantidadHuespedes,
   });
 
   @override
@@ -26,71 +34,81 @@ class PayAccomodation extends StatefulWidget {
 
 class _PayAccomodationState extends State<PayAccomodation> {
   bool isLoading = false;
+  final Dio dio = Dio();
 
   Future<void> _confirmarPago() async {
-  setState(() => isLoading = true);
+    setState(() => isLoading = true);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token') ?? '';
 
-  final paysService = PaysServices();
-  final response = await paysService.createPay(widget.idReserva);
+      if (token.isEmpty) throw Exception('No se encontró token de autenticación');
 
-  setState(() => isLoading = false);
+      dio.options.headers['Authorization'] = 'Bearer $token';
 
-  if (response != null) {
-    // Mostrar el mensaje recibido del backend
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('✅ ${response.msg}')),
-    );
+      final datos = {
+        "huesped": widget.huespedId,
+        "alojamiento": widget.alojamientoId,
+        "fechaCheckIn": widget.fechaCheckIn.toIso8601String(),
+        "fechaCheckOut": widget.fechaCheckOut.toIso8601String(),
+        "numeroHuespedes": widget.cantidadHuespedes,
+        "precioTotal": widget.precioTotal,
+      };
+      final respuesta = await dio.post(
+        'https://hospedajes-4rmu.onrender.com/api/reservas/crear',
+        data: datos,
+      );
 
-    // Obtener datos del usuario
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getString('userId');
-    final name = prefs.getString('userName');
-    final rol = prefs.getString('userRole');
+      if (respuesta.statusCode == 201) {
+        final reservaId = respuesta.data['_id'] ?? respuesta.data['id'] ?? '';
+        if (reservaId.isEmpty) throw Exception('ID de reserva no recibido');
 
-    // Redirigir limpiando la pila
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(
-        builder: (_) => GuestDashboard(
-          nombre: name!,
-          rol: rol!
-        ),
-      ),
-      (route) => false, // Esta línea limpia todas las rutas anteriores
-    );
-  } else {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('❌ Error al realizar la transferencia')),
-    );
+        // Ejecutar la función de crear pago después de crear reserva
+        final PaysServices _services = PaysServices();
+        final pagoResponse = await _services.createPay(reservaId);
+        if (pagoResponse == null) throw Exception('Error al crear el pago');
+
+        final nombre = prefs.getString('userName') ?? '';
+        final rol = prefs.getString('userRole') ?? '';
+
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (_) => GuestDashboard(nombre: nombre, rol: rol),
+          ),
+          (route) => false,
+        );
+      } else {
+        throw Exception('Error al crear la reserva. Código: ${respuesta.statusCode}');
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('❌ Error: $e')),
+      );
+    } finally {
+      setState(() => isLoading = false);
+    }
   }
-}
 
-
-
-  Widget _buildDetailRow(String label, String value,
-      {Color? valueColor, double? valueFontSize}) {
+  Widget _buildDetailRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
-              flex: 3,
-              child: Text(
-                label,
-                style: TextStyle(
-                    fontWeight: FontWeight.w600, color: Colors.grey.shade700),
-              )),
+            flex: 3,
+            child: Text(
+              label,
+              style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.grey),
+            ),
+          ),
           Expanded(
-              flex: 4,
-              child: Text(
-                value,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: valueColor ?? Colors.black,
-                  fontSize: valueFontSize ?? 16,
-                ),
-              )),
+            flex: 4,
+            child: Text(
+              value,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+          ),
         ],
       ),
     );
@@ -100,110 +118,65 @@ class _PayAccomodationState extends State<PayAccomodation> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Pago del alojamiento',
-          style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
-        ),
+        title: const Text('Pago del alojamiento'),
+        backgroundColor: Colors.green.shade700,
         centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new),
-          onPressed: isLoading ? null : () => Navigator.pop(context, false),
-        ),
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text(
-                'Detalles de la Transferencia',
-                style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 20),
-              Card(
-                elevation: 3,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-                child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-                  child: Column(
-                    children: [
-                      _buildDetailRow('Cuenta:', widget.nombreDuenio),
-                      _buildDetailRow('Alojamiento:', widget.alojamiento),
-                      _buildDetailRow(
-                          'Concepto:', 'Reserva por ${widget.noches} noches'),
-                      _buildDetailRow(
-                        'Precio por noche:',
-                        '\$${widget.precioPorNoche}',
-                      ),
-                      const Divider(height: 30),
-                      _buildDetailRow(
-                        'Total a pagar:',
-                        '\$${widget.precioTotal}',
-                        valueColor: Colors.green.shade700,
-                        valueFontSize: 20,
-                      ),
-                    ],
-                  ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'Detalles de la transferencia',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            Card(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              elevation: 5,
+              shadowColor: Colors.green.shade200,
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    _buildDetailRow('Cuenta:', widget.duenio),
+                    _buildDetailRow('Concepto:', 'Reserva por ${widget.noches} noches'),
+                    _buildDetailRow('Precio por noche:', '\$${widget.precioPorNoche}'),
+                    const Divider(height: 32, thickness: 1.2),
+                    _buildDetailRow('Total a pagar:', '\$${widget.precioTotal}'),
+                  ],
                 ),
               ),
-              const SizedBox(height: 40),
-              ElevatedButton.icon(
-                onPressed: isLoading ? null : _confirmarPago,
-                icon: isLoading
-                    ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 3,
-                        ),
-                      )
-                    : const Icon(Icons.check_circle_outline, size: 26),
-                label: Text(
-                  isLoading ? 'Procesando...' : 'Confirmar Transferencia',
-                  style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14)),
-                  backgroundColor: Colors.green.shade700,
-                  foregroundColor: Colors.white,
-                  elevation: 5,
-                ),
-              ),
-              const SizedBox(height: 16),
-              // Botón Cancelar mejorado
-              OutlinedButton(
-                onPressed: isLoading
-                    ? null
-                    : () {
-                        print('Cancelar pulsado');
-                        Navigator.pop(context, false);
-                      },
-                style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: Colors.grey.shade400),
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14)),
-                  foregroundColor: Colors.black87,
-                ),
-                child: const Text(
-                  'Cancelar',
-                  style: TextStyle(fontSize: 16),
-                ),
-              ),
-            ],
+            ),
+            const SizedBox(height: 36),
+            SizedBox(
+  width: double.infinity,
+  child: ElevatedButton(
+    style: ElevatedButton.styleFrom(
+      backgroundColor: Colors.green.shade700,
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+    ),
+    onPressed: isLoading ? null : _confirmarPago,
+    child: isLoading
+        ? const SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(
+              color: Colors.white,
+              strokeWidth: 3,
+            ),
+          )
+        : const Text(
+            'Confirmar Transferencia',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold , color: Colors.white,
+),
           ),
+  ),
+),
+          ],
         ),
       ),
     );

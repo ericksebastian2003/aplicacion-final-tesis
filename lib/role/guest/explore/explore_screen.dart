@@ -161,55 +161,69 @@ class _CardAccomodationsState extends State<CardAccomodations> {
             Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.destino.titulo,
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      const Icon(Icons.home_work_outlined,
-                          size: 18, color: Colors.grey),
-                      const SizedBox(width: 6),
-                      Text(widget.destino.tipoAlojamiento),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      const Icon(Icons.attach_money, size: 18, color: Colors.grey),
-                      const SizedBox(width: 6),
-                      Text(
-                          'Precio por noche: \$${widget.destino.precioNoche.toStringAsFixed(2)}'),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      const Icon(Icons.location_on_outlined,
-                          size: 18, color: Colors.grey),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                            '${widget.destino.ciudad}, ${widget.destino.provincia}, ${widget.destino.pais}'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      const Icon(Icons.map_outlined, size: 18, color: Colors.grey),
-                      const SizedBox(width: 6),
-                      Expanded(child: Text(widget.destino.direccion)),
-                    ],
-                  ),
-                ],
-              ),
+  crossAxisAlignment: CrossAxisAlignment.start,
+  children: [
+    Text(
+      widget.destino.titulo,
+      style: const TextStyle(
+        fontSize: 22,
+        fontWeight: FontWeight.w700,
+      ),
+    ),
+    const SizedBox(height: 8),
+    Row(
+      children: [
+        const Icon(Icons.home_work_outlined,
+            size: 18, color: Colors.grey),
+        const SizedBox(width: 6),
+        Text(widget.destino.tipoAlojamiento),
+      ],
+    ),
+    const SizedBox(height: 6),
+    // ⭐ NUEVO: Mostrar calificación promedio si existe
+    if (widget.destino.calificacionPromedio != null)
+      Row(
+        children: [
+          const Icon(Icons.star, color: Colors.amber, size: 18),
+          const SizedBox(width: 6),
+          Text(
+            widget.destino.calificacionPromedio!.toStringAsFixed(1),
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+    const SizedBox(height: 6),
+    Row(
+      children: [
+        const Icon(Icons.attach_money, size: 18, color: Colors.grey),
+        const SizedBox(width: 6),
+        Text(
+            'Precio por noche: \$${widget.destino.precioNoche.toStringAsFixed(2)}'),
+      ],
+    ),
+    const SizedBox(height: 6),
+    Row(
+      children: [
+        const Icon(Icons.location_on_outlined,
+            size: 18, color: Colors.grey),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+              '${widget.destino.ciudad}, ${widget.destino.provincia}, ${widget.destino.pais}'),
+        ),
+      ],
+    ),
+    const SizedBox(height: 6),
+    Row(
+      children: [
+        const Icon(Icons.map_outlined, size: 18, color: Colors.grey),
+        const SizedBox(width: 6),
+        Expanded(child: Text(widget.destino.direccion)),
+      ],
+    ),
+  ],
+),
+
             ),
           ],
         ),

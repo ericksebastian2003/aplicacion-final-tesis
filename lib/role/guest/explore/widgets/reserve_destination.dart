@@ -32,33 +32,17 @@ class _ReserveDestinationState extends State<ReserveDestination> {
   DateTime? _checkOut;
   int _cantidadNoches = 1;
 
-  // Para el calendario:
   CalendarFormat _calendarFormat = CalendarFormat.month;
   DateTime _focusedDay = DateTime.now();
 
   @override
   void initState() {
     super.initState();
-    initializeDateFormatting('es_ES', null); // Inicializa Intl en español
+    initializeDateFormatting('es_ES', null);
   }
 
-  Future<void> _crearReservation() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    if (_checkIn == null || _checkOut == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor, seleccione las fechas de ingreso y salida')),
-      );
-      return;
-    }
-
-    if (_checkOut!.isBefore(_checkIn!)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('La fecha de salida debe ser después de la de ingreso')),
-      );
-      return;
-    }
-
+  Future<bool> _crearReservation() async {
+    // Retorna true si la reserva fue creada con éxito, false en caso contrario.
     try {
       setState(() => _enviando = true);
 
@@ -67,13 +51,13 @@ class _ReserveDestinationState extends State<ReserveDestination> {
       final huespedId = prefs.getString('userId') ?? '';
 
       final noches = _cantidadNoches;
-
       final numHuespedes = _cantidadHuespedes;
+
       if (numHuespedes > widget.maxHuespedes) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Solo se permiten hasta ${widget.maxHuespedes} huéspedes')),
         );
-        return;
+        return false;
       }
 
       final precioTotal = widget.precioPorNoche * noches;
@@ -113,15 +97,19 @@ class _ReserveDestinationState extends State<ReserveDestination> {
           ),
           (route) => false,
         );
+
+        return true;
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Error al crear la reserva')),
         );
+        return false;
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: $e')),
       );
+      return false;
     } finally {
       setState(() => _enviando = false);
     }
@@ -129,18 +117,15 @@ class _ReserveDestinationState extends State<ReserveDestination> {
 
   void _onDaySelected(DateTime selectedDay, DateTime focusedDay) {
     setState(() {
-      // Si no hay checkIn, lo asignamos
       if (_checkIn == null || (_checkIn != null && _checkOut != null)) {
         _checkIn = selectedDay;
         _checkOut = null;
         _cantidadNoches = 1;
       } else if (_checkIn != null && _checkOut == null) {
-        // Si la fecha seleccionada es después del checkIn, asignamos checkOut
         if (selectedDay.isAfter(_checkIn!)) {
           _checkOut = selectedDay;
           _cantidadNoches = _checkOut!.difference(_checkIn!).inDays;
         } else {
-          // Si no, reasignamos checkIn
           _checkIn = selectedDay;
         }
       }
@@ -184,11 +169,7 @@ class _ReserveDestinationState extends State<ReserveDestination> {
                         day.isAtSameMomentAs(_checkOut ?? DateTime(0))),
                 onDaySelected: _onDaySelected,
                 calendarStyle: const CalendarStyle(
-                  // Colores tipo Airbnb blanco y negro
-                  todayDecoration: BoxDecoration(
-                      color: Colors.black,
-                      shape: BoxShape.circle,
-                  ),
+                  todayDecoration: BoxDecoration(), // <- Aquí no se marca hoy
                   selectedDecoration: BoxDecoration(
                     color: Colors.black,
                     shape: BoxShape.circle,
@@ -198,19 +179,19 @@ class _ReserveDestinationState extends State<ReserveDestination> {
                   defaultTextStyle: TextStyle(color: Colors.black),
                   outsideTextStyle: TextStyle(color: Colors.grey),
                 ),
-                headerStyle: HeaderStyle(
+                headerStyle: const HeaderStyle(
                   formatButtonVisible: false,
                   titleCentered: true,
-                  titleTextStyle: const TextStyle(
+                  titleTextStyle: TextStyle(
                     color: Colors.black,
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
-                  leftChevronIcon: const Icon(
+                  leftChevronIcon: Icon(
                     Icons.chevron_left,
                     color: Colors.black,
                   ),
-                  rightChevronIcon: const Icon(
+                  rightChevronIcon: Icon(
                     Icons.chevron_right,
                     color: Colors.black,
                   ),
@@ -233,7 +214,6 @@ class _ReserveDestinationState extends State<ReserveDestination> {
                 style: const TextStyle(fontSize: 16),
               ),
               const SizedBox(height: 20),
-
               const Text(
                 'Número de huéspedes',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
@@ -260,7 +240,8 @@ class _ReserveDestinationState extends State<ReserveDestination> {
                     ),
                     child: Text(
                       '$_cantidadHuespedes',
-                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                          fontSize: 24, fontWeight: FontWeight.bold),
                     ),
                   ),
                   IconButton(
@@ -274,7 +255,6 @@ class _ReserveDestinationState extends State<ReserveDestination> {
                 ],
               ),
               const SizedBox(height: 20),
-
               Text(
                 'Cantidad de noches: $_cantidadNoches',
                 style: const TextStyle(
@@ -284,7 +264,6 @@ class _ReserveDestinationState extends State<ReserveDestination> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 20),
-
               Text(
                 'Precio total: \$${precioTotal}',
                 style: const TextStyle(
@@ -296,60 +275,64 @@ class _ReserveDestinationState extends State<ReserveDestination> {
               const SizedBox(height: 30),
               ElevatedButton(
                 onPressed: _enviando
-                    ? null
-                    : () async {
-                        if (_checkIn == null || _checkOut == null) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content:
-                                    Text('Por favor selecciona ambas fechas')),
-                          );
-                          return;
-                        }
-                        if (_cantidadNoches < 1) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content:
-                                    Text('La cantidad de noches debe ser al menos 1')),
-                          );
-                          return;
-                        }
+  ? null
+  : () async {
+      if (_checkIn == null || _checkOut == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Por favor selecciona ambas fechas')),
+        );
+        return;
+      }
+      if (_cantidadNoches < 1) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('La cantidad de noches debe ser al menos 1')),
+        );
+        return;
+      }
 
-                        await _crearReservation();
+      final prefs = await SharedPreferences.getInstance();
+      final huespedId = prefs.getString('userId') ?? '';
 
-                        final prefs = await SharedPreferences.getInstance();
-                        final idReserva = prefs.getString('reservaId');
+      if (huespedId.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No se encontró el usuario, por favor inicia sesión')),
+        );
+        return;
+      }
 
-                        if (idReserva == null) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content:
-                                    Text('No se pudo obtener el ID de la reserva')),
-                          );
-                          return;
-                        }
+      // Enviar a pantalla de pago
+      final resultadoPago = await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => PayAccomodation(
+            noches: _cantidadNoches,
+            precioPorNoche: widget.precioPorNoche,
+            precioTotal: widget.precioPorNoche * _cantidadNoches,
+            duenio: widget.duenio,
+            alojamientoId: widget.alojamientoId,
+            huespedId: huespedId,
+            fechaCheckIn: _checkIn!,
+            fechaCheckOut: _checkOut!,
+            cantidadHuespedes: _cantidadHuespedes,
+          ),
+        ),
+      );
 
-                        final resultadoPago = await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => PayAccomodation(
-                              alojamiento: widget.alojamientoId,
-                              nombreDuenio: widget.duenio,
-                              noches: _cantidadNoches,
-                              precioPorNoche: widget.precioPorNoche,
-                              precioTotal: precioTotal,
-                              idReserva: idReserva,
-                            ),
-                          ),
-                        );
+      if (resultadoPago == true) {
+        final exito = await _crearReservation();
+        if (!exito) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Error al crear la reserva después del pago')),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Pago cancelado o fallido')),
+        );
+      }
+    },
 
-                        if (resultadoPago != true) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text('Pago cancelado o fallido')),
-                          );
-                        }
-                      },
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(

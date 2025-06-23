@@ -128,6 +128,7 @@ class _EditAccommodationScreenState extends State<EditAccommodationScreen> {
       direccion: direccionController.text,
       anfitrionId: anfitrionController.text,
       estadoAlojamiento: 'activo',
+      calificacionPromedio: widget.alojamiento.calificacionPromedio,
     );
 
     try {

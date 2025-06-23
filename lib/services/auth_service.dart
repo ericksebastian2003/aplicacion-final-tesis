@@ -21,12 +21,12 @@ class AuthService {
       'password': password
     };
 
-    print('📨 Body: $data');
+    //print('📨 Body: $data');
 
     final response = await _dio.post('/login' , data : data);
 
-    print('🔙 Código de estado: ${response.statusCode}');
-    print('📬 Respuesta: ${response.data}');
+    //print('🔙 Código de estado: ${response.statusCode}');
+    //print('📬 Respuesta: ${response.data}');
 
 
     if (response.statusCode == 200) {
@@ -40,8 +40,8 @@ class AuthService {
   on DioException catch(e) {
   print('❌ DioException: ${e.message}');
   if (e.response != null) {
-    print('❌ Código de estado (error): ${e.response?.statusCode}');
-    print('❌ Respuesta del servidor: ${e.response?.data}');
+    //print('❌ Código de estado (error): ${e.response?.statusCode}');
+    //print('❌ Respuesta del servidor: ${e.response?.data}');
     return {
       'status': 'error',
       'message': e.response?.data['msg'] ?? 'Error desconocido',
@@ -52,7 +52,7 @@ class AuthService {
 }
 
   catch (e) {
-    print('❌ Excepción durante la conexión: $e');
+    //print('❌ Excepción durante la conexión: $e');
     return {'error': 'Error de conexión: $e'};
   }
 }
@@ -73,9 +73,9 @@ class AuthService {
         ),
     );
 
-    print('🔙 Código de estado: ${response.statusCode}');
-    print('📬 Respuesta: ${response.data}');
-    print('📦 Headers: ${response.headers}');
+    //print('🔙 Código de estado: ${response.statusCode}');
+    //print('📬 Respuesta: ${response.data}');
+    //print('📦 Headers: ${response.headers}');
 
     if (response.statusCode == 201) {
       final msg = response.data['msg'] ;
@@ -84,10 +84,10 @@ class AuthService {
     }
   } 
   on DioException catch(e) {
-  print('❌ DioException: ${e.message}');
+  //print('❌ DioException: ${e.message}');
   if (e.response != null) {
-    print('❌ Código de estado (error): ${e.response?.statusCode}');
-    print('❌ Respuesta del servidor: ${e.response?.data}');
+    //print('❌ Código de estado (error): ${e.response?.statusCode}');
+    //print('❌ Respuesta del servidor: ${e.response?.data}');
     return {
       'status': 'error',
       'msg': e.response?.data['msg'] ?? 'Error desconocido',
@@ -106,7 +106,7 @@ class AuthService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('_usuario');
     await prefs.remove('token');
-    print('✅ Usuario ha cerrado sesión correctamente');
+    //print('✅ Usuario ha cerrado sesión correctamente');
   }
   // Obtener el nombre del usuario logueado
   Future<String?> getLoggedUserName() async {

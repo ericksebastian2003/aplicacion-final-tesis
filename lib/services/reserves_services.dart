@@ -1,6 +1,6 @@
+import 'package:desole_app/data/models/Calificacion.dart';
 import 'package:desole_app/data/models/Reservas.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 class ReservesServices {
   final Dio _dio = Dio();
@@ -79,6 +79,44 @@ class ReservesServices {
 
       print('✅ [FINAL RESERVAS PARSEADAS] => ${reservasList.length}');
       return reservasList;
+    }
+  } catch (e, stackTrace) {
+    print('❌ [EXCEPTION] $e');
+    print('📌 [STACKTRACE] $stackTrace');
+  }
+
+  return [];
+}
+  Future<List<Calificacion>> getScoreForGuest(String idAlojamiento) async {
+  final prefs = await SharedPreferences.getInstance();
+  final token = prefs.getString('token');
+
+  print('🔐 [TOKEN] => $token');
+
+  if (token == null) {
+    print('❌ [ERROR] No se encontró el token');
+    return [];
+  }
+
+  _dio.options.headers['Authorization'] = 'Bearer $token';
+
+  try {
+    final response = await _dio.get(
+      'https://hospedajes-4rmu.onrender.com/api/calificacion/$idAlojamiento',
+    );
+
+    print('✅ [RESPONSE STATUS] => ${response.statusCode}');
+    print('📥 [RESPONSE DATA] => ${response.data}');
+
+    if (response.statusCode == 200) {
+      final List<dynamic> califcaciones = response.data;
+
+      final calificacionesList = califcaciones
+          .map((json) => Calificacion.fromJson(json))
+          .toList();
+
+      print('✅ [Calificaciones parseadas] => ${calificacionesList.length}');
+      return calificacionesList;
     }
   } catch (e, stackTrace) {
     print('❌ [EXCEPTION] $e');
@@ -184,6 +222,29 @@ Future<bool> updateReservationsForHost(String idReserva, Reservas reservationUpd
     return false;
   }
 }
+Future<bool> qualifyreservationsForGuest(String idReserva, Map<String, dynamic> data) async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    _dio.options.headers['Authorization'] = 'Bearer $token';
+    _dio.options.headers['Content-Type'] = 'application/json';
+
+    print('📝 ID Reserva: $idReserva');
+    print('📦 Datos a enviar: $data');
+
+    final response = await _dio.post(
+      'https://hospedajes-4rmu.onrender.com/api/calificacion/crear/$idReserva',
+      data: data,
+    );
+
+    print('📤 Status: ${response.statusCode}');
+    return response.statusCode == 200 || response.statusCode == 201;
+  } catch (e) {
+    print('❌ Error al calificar: $e');
+    return false;
+  }
+}
+
 
 
 }

@@ -227,6 +227,7 @@ class _AccountScreenState extends State<AccountScreen> {
                       );
                     }
                   ),
+                 
                   const SizedBox(height: 10),
                   const Text(
                     'Cerrar sesión',

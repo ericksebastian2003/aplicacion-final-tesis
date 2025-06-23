@@ -3,9 +3,8 @@ import 'package:desole_app/role/host/advertisements/widgets/create_details.dart'
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-import '../../../../data/providers/form_alojamiento_provider.dart';
 import 'package:dotted_border/dotted_border.dart';
-
+import '../../../../providers/form_alojamiento_provider.dart';
 class CreateImage extends StatefulWidget {
   final void Function(String) onImageUploaded;
   final String alojamientoId;

@@ -11,10 +11,10 @@ class ComplaintsServices {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
 
-    print('🔐 [TOKEN] => $token');
+    //print('🔐 [TOKEN] => $token');
 
     if (token == null) {
-      print('❌ [ERROR] No se encontró el token');
+      //print('❌ [ERROR] No se encontró el token');
       return [];
     }
 
@@ -25,8 +25,8 @@ class ComplaintsServices {
         'https://hospedajes-4rmu.onrender.com/api/reportes?tipo=$tipo',
       );
 
-      print('✅ [RESPONSE STATUS] => ${response.statusCode}');
-      print('📥 [RESPONSE DATA] => ${response.data}');
+     // print('✅ [RESPONSE STATUS] => ${response.statusCode}');
+      //print('📥 [RESPONSE DATA] => ${response.data}');
 
       if (response.statusCode == 200) {
         final List<dynamic> reportes = response.data;
@@ -34,7 +34,7 @@ class ComplaintsServices {
         final reportesList =
             reportes.map((json) => Reportes.fromJson(json)).toList();
 
-        print('✅ [REPORTES PARSEADOS] => ${reportesList.length}');
+        //print('✅ [REPORTES PARSEADOS] => ${reportesList.length}');
         return reportesList;
       }
     } catch (e, stackTrace) {
