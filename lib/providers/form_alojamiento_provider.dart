@@ -2,7 +2,6 @@ import 'package:cross_file/cross_file.dart';  // Cambié la importación para XF
 import 'package:desole_app/data/models/FotoAlojamientos.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
-import 'dart:io';
 import 'package:path/path.dart' as path;
 
 class FormAlojamientoProvider with ChangeNotifier {
@@ -205,7 +204,7 @@ class FormAlojamientoProvider with ChangeNotifier {
     });
 
     // 📸 Imprimir datos que se enviarán
-    print('📤 Enviando imagen:');
+    /*print('📤 Enviando imagen:');
     print('📁 Nombre archivo: $nombreArchivo');
     print('📍 Path: ${imagen.path}');
     print('📌 Foto Principal: $esPrincipal');
@@ -213,6 +212,7 @@ class FormAlojamientoProvider with ChangeNotifier {
     for (var field in formData.fields) {
       print(' - ${field.key}: ${field.value}');
     }
+    */
 
     try {
       final response = await dio.post(

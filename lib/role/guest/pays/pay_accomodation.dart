@@ -1,9 +1,10 @@
 import 'package:desole_app/services/pays_services.dart';
+import 'package:desole_app/services/users_services.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:desole_app/role/guest/dashboard/guest_dashboard.dart';
-
+import '../profile/widgets/my_balance.dart';
 class PayAccomodation extends StatefulWidget {
   final int noches;
   final int precioPorNoche;
@@ -35,15 +36,32 @@ class PayAccomodation extends StatefulWidget {
 class _PayAccomodationState extends State<PayAccomodation> {
   bool isLoading = false;
   final Dio dio = Dio();
+  double _saldo = 0;
 
   Future<void> _confirmarPago() async {
     setState(() => isLoading = true);
+
     try {
+      final userService = UsersServices();
+      final profile = await userService.getUserProfile();
+      final rawSaldo = profile?['saldo'];
+      _saldo = rawSaldo is num ? rawSaldo.toDouble() : 0;
+
+      // ✅ Verificar si el saldo es suficiente
+      if (_saldo < widget.precioTotal) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Saldo insuficiente. Debes realizar un depósito.')),
+        );
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const SaldoPage()),
+        );
+        return;
+      }
+
+      // ✅ Continuar con la reserva y el pago
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token') ?? '';
-
-      if (token.isEmpty) throw Exception('No se encontró token de autenticación');
-
       dio.options.headers['Authorization'] = 'Bearer $token';
 
       final datos = {
@@ -54,6 +72,7 @@ class _PayAccomodationState extends State<PayAccomodation> {
         "numeroHuespedes": widget.cantidadHuespedes,
         "precioTotal": widget.precioTotal,
       };
+
       final respuesta = await dio.post(
         'https://hospedajes-4rmu.onrender.com/api/reservas/crear',
         data: datos,
@@ -63,9 +82,7 @@ class _PayAccomodationState extends State<PayAccomodation> {
         final reservaId = respuesta.data['_id'] ?? respuesta.data['id'] ?? '';
         if (reservaId.isEmpty) throw Exception('ID de reserva no recibido');
 
-        // Ejecutar la función de crear pago después de crear reserva
-        final PaysServices _services = PaysServices();
-        final pagoResponse = await _services.createPay(reservaId);
+        final pagoResponse = await PaysServices().createPay(reservaId);
         if (pagoResponse == null) throw Exception('Error al crear el pago');
 
         final nombre = prefs.getString('userName') ?? '';
@@ -73,9 +90,7 @@ class _PayAccomodationState extends State<PayAccomodation> {
 
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(
-            builder: (_) => GuestDashboard(nombre: nombre, rol: rol),
-          ),
+          MaterialPageRoute(builder: (_) => GuestDashboard(nombre: nombre, rol: rol)),
           (route) => false,
         );
       } else {
@@ -152,30 +167,26 @@ class _PayAccomodationState extends State<PayAccomodation> {
             ),
             const SizedBox(height: 36),
             SizedBox(
-  width: double.infinity,
-  child: ElevatedButton(
-    style: ElevatedButton.styleFrom(
-      backgroundColor: Colors.green.shade700,
-      padding: const EdgeInsets.symmetric(vertical: 14),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-    ),
-    onPressed: isLoading ? null : _confirmarPago,
-    child: isLoading
-        ? const SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(
-              color: Colors.white,
-              strokeWidth: 3,
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green.shade700,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                onPressed: isLoading ? null : _confirmarPago,
+                child: isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
+                      )
+                    : const Text(
+                        'Confirmar Transferencia',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                      ),
+              ),
             ),
-          )
-        : const Text(
-            'Confirmar Transferencia',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold , color: Colors.white,
-),
-          ),
-  ),
-),
           ],
         ),
       ),

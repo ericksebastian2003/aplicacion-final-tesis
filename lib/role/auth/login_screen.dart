@@ -3,15 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/auth_service.dart';
 import '../admin/dashboard/admin_dashboard.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../guest/dashboard/guest_dashboard.dart';
 import 'register_screen.dart';
 import '../../data/models/Usuarios.dart';
 import 'dart:convert';
 import 'package:desole_app/providers/session_provider.dart';
-
 import 'package:provider/provider.dart';
-
+import './widgets/recuperar_password.dart';
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -55,12 +53,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
   final email = _emailController.text.trim();
   final password = _passwordController.text.trim();
-  print('Datos enviados al loginUser: {email: $email, password: $password}');
+  // print('Datos enviados al loginUser: {email: $email, password: $password}');
 
   setState(() => loading = true);
   try {
     final result = await authService.loginUser(email, password);
-    print('Respuesta login: $result');
+   //  print('Respuesta login: $result');
 
     if (result != null && result['token'] != null ) {
       final user = Usuarios.fromJson(result);
@@ -97,7 +95,7 @@ class _LoginScreenState extends State<LoginScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Error de autenticación: ${e.toString()}')),
     );
-    print('Error de autenticación: ${e.toString()}');
+    // print('Error de autenticación: ${e.toString()}');
   } finally {
     setState(() => loading = false);
   }
@@ -112,7 +110,7 @@ class _LoginScreenState extends State<LoginScreen> {
     await prefs.setString('token', user.token ?? '');
 
     // Muestra en consola
-    print('Token guardado: ${user.token}');
+   //  print('Token guardado: ${user.token}');
   }
 
   void handleLoginSuccess(Usuarios user) {
@@ -255,7 +253,7 @@ Widget build(BuildContext context) {
                   child: loading
                       ? const CircularProgressIndicator(color: Colors.white)
                       : const Text(
-                          'INGRESAR',
+                          'Ingresar',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -266,10 +264,23 @@ Widget build(BuildContext context) {
               ),
 
               const SizedBox(height: 20),
-              const Text(
-                '¿Has olvidado tu contraseña?',
-                style: TextStyle(color: Colors.black54, fontSize: 17),
-              ),
+              GestureDetector(
+  onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const RecuperarPassword()),
+    );
+  },
+  child: const Text(
+    '¿Has olvidado tu contraseña?',
+    style: TextStyle(
+      color: Colors.black54,
+      fontSize: 17,
+      
+    ),
+  ),
+),
+
               const SizedBox(height: 30),
 
               /// REGISTRO

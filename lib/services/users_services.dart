@@ -43,6 +43,8 @@ class UsersServices {
         }
         return null;
   }
+
+
   Future<bool> updateUserProfile(Map<String , dynamic> updateData) async{
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
@@ -113,13 +115,13 @@ Future<Map<String, dynamic>?> getBalanceForHost() async {
     
       final response = await _dio.post('https://hospedajes-4rmu.onrender.com/api/usuarios/perfil/foto/$idUser' , data: formData,
       );
-      print(response);
+      // print(response);
       return response.statusCode == 200;
     }
   
     catch(e){
       
-      print('Error actualizando la foto de perfil: $e');
+      // print('Error actualizando la foto de perfil: $e');
       return false;
 
   }

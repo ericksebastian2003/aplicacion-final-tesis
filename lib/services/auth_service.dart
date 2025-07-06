@@ -131,5 +131,46 @@ class AuthService {
     return null;
   }
 
+   Future<Map<String, dynamic>?> recuperarPassword(String email) async {
+  final Dio _dio = Dio();
+
+  try {
+    final response = await _dio.post(
+      'https://hospedajes-4rmu.onrender.com/api/usuarios/recuperar-password',
+      data: {'email': email},
+    );
+
+    // Devuelve el mapa con mensaje y estado
+    return response.data;
+  } catch (e) {
+    print('Error enviando solicitud de recuperación: $e');
+    return {
+      'status': 'error',
+      'msg': 'Error al enviar la solicitud. Verifica el correo o intenta más tarde.'
+    };
+  }
+}
+
+Future<bool> updatePassword(String token ,  String password) async {
+  
+
+  final Dio _dio = Dio();
+  _dio.options.headers['Authorization'] = 'Bearer $token';
+
+  try {
+    final response = await _dio.post(
+      'https://hospedajes-4rmu.onrender.com/api/usuarios/recuperar-password/$token',
+      data: {
+        'password': password,
+      },
+    );
+
+    return true;
+  } catch (e) {
+    print('Error actualizando la contraseña: $e');
+    return false;
+  }
+}
+
 
 }

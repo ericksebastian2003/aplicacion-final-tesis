@@ -1,6 +1,5 @@
 import 'package:desole_app/services/users_services.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dio/dio.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
