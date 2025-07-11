@@ -179,7 +179,6 @@ class FormAlojamientoProvider with ChangeNotifier {
         final alojamientoId = response.data['_id'] ?? response.data['id'];
         return alojamientoId;
       } else {
-        print('Error al crear alojamiento: ${response.statusCode}');
         return null;
       }
     } catch (e) {
@@ -226,12 +225,9 @@ class FormAlojamientoProvider with ChangeNotifier {
         ),
       );
 
-      print('📨 Respuesta status: ${response.statusCode}');
-      print('📨 Respuesta data: ${response.data}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final foto = FotosAlojamientos.fromJson(response.data);
-        print('✅ Imagen subida correctamente: ${foto.urlFoto}');
       } else {
         print('❌ Error en respuesta del servidor: ${response.statusCode}');
       }

@@ -40,9 +40,8 @@ class _SaldoPageState extends State<SaldoPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Mi saldo'),
-        centerTitle: true,
-      ),
+        title: const Text('Mi saldo' , style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black),
+            )      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : Container(

@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:desole_app/role/guest/dashboard/guest_dashboard.dart';
 import '../profile/widgets/my_balance.dart';
+
 class PayAccomodation extends StatefulWidget {
   final int noches;
   final int precioPorNoche;
@@ -47,7 +48,6 @@ class _PayAccomodationState extends State<PayAccomodation> {
       final rawSaldo = profile?['saldo'];
       _saldo = rawSaldo is num ? rawSaldo.toDouble() : 0;
 
-      // ✅ Verificar si el saldo es suficiente
       if (_saldo < widget.precioTotal) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Saldo insuficiente. Debes realizar un depósito.')),
@@ -59,7 +59,6 @@ class _PayAccomodationState extends State<PayAccomodation> {
         return;
       }
 
-      // ✅ Continuar con la reserva y el pago
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token') ?? '';
       dio.options.headers['Authorization'] = 'Bearer $token';
@@ -133,9 +132,13 @@ class _PayAccomodationState extends State<PayAccomodation> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Pago del alojamiento'),
-        backgroundColor: Colors.green.shade700,
-        centerTitle: true,
+        title: const Text(
+          'Pago del alojamiento',
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black87),
+        ),
+        backgroundColor: Colors.white,
+        elevation: 1,
+        iconTheme: const IconThemeData(color: Colors.black),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -144,10 +147,12 @@ class _PayAccomodationState extends State<PayAccomodation> {
           children: [
             const Text(
               'Detalles de la transferencia',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
+
+            // Tarjeta de detalles
             Card(
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               elevation: 5,
@@ -157,7 +162,7 @@ class _PayAccomodationState extends State<PayAccomodation> {
                 child: Column(
                   children: [
                     _buildDetailRow('Cuenta:', widget.duenio),
-                    _buildDetailRow('Concepto:', 'Reserva por ${widget.noches} noches'),
+                    _buildDetailRow('Concepto:', 'Reserva por alojamiento'),
                     _buildDetailRow('Precio por noche:', '\$${widget.precioPorNoche}'),
                     const Divider(height: 32, thickness: 1.2),
                     _buildDetailRow('Total a pagar:', '\$${widget.precioTotal}'),
@@ -165,25 +170,31 @@ class _PayAccomodationState extends State<PayAccomodation> {
                 ),
               ),
             ),
-            const SizedBox(height: 36),
+
+            const SizedBox(height: 32), // Espacio entre tarjeta y botón
+
+            // Botón
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green.shade700,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  backgroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 onPressed: isLoading ? null : _confirmarPago,
                 child: isLoading
                     ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
+                        height: 22,
+                        width: 22,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2.5,
+                        ),
                       )
                     : const Text(
                         'Confirmar Transferencia',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                        style: TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold),
                       ),
               ),
             ),

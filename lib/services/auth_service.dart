@@ -73,9 +73,7 @@ class AuthService {
         ),
     );
 
-    //print('🔙 Código de estado: ${response.statusCode}');
-    //print('📬 Respuesta: ${response.data}');
-    //print('📦 Headers: ${response.headers}');
+
 
     if (response.statusCode == 201) {
       final msg = response.data['msg'] ;

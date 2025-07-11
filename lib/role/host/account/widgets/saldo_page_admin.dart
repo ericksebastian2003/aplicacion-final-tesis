@@ -41,7 +41,7 @@ class _SaldoPageAdminState extends State<SaldoPageAdmin> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Mi saldo' , style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+        title: const Text('Mis ganancias' , style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
 ),
         
       ),

@@ -157,15 +157,7 @@ Widget build(BuildContext context) {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const SizedBox(height: 12),
-              const Text(
-                'HOTEL\'S',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-              ),
-              const SizedBox(height: 30),
+        
               const Text(
                 'Bienvenido de nuevo',
                 style: TextStyle(
@@ -179,7 +171,7 @@ Widget build(BuildContext context) {
                 'Inicia sesión con tu cuenta',
                 style: TextStyle(color: Colors.black54, fontSize: 16),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 60),
 
               /// EMAIL
               TextFormField(

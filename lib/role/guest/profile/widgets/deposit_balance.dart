@@ -19,7 +19,6 @@ class _DepositoPageState extends State<DepositoPage> {
   final _montoController = TextEditingController();
 
   bool isLoading = false;
-
   final List<double> montosRapidos = [10, 20, 50, 100, 200];
 
   void _seleccionarMonto(double monto) {
@@ -30,25 +29,19 @@ class _DepositoPageState extends State<DepositoPage> {
 
   Future<void> _hacerDeposito() async {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() => isLoading = true);
 
     final service = UsersServices();
     final prefs = await SharedPreferences.getInstance();
     final nombreUser = prefs.getString('userName') ?? '';
     final role = prefs.getString('userRole') ?? '';
-
     final monto = double.parse(_montoController.text);
 
-    final dataBalance = {
-      "monto": monto,
-    };
-
+    final dataBalance = {"monto": monto};
     final success = await service.depositBalance(dataBalance);
 
     if (success) {
       _montoController.clear();
-
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(
           builder: (context) => GuestDashboard(nombre: nombreUser, rol: role),
@@ -78,25 +71,30 @@ class _DepositoPageState extends State<DepositoPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Depósito con Tarjeta'),
-        backgroundColor: Colors.green.shade700,
+        title: const Text('Depósito con Tarjeta', style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.white,
+        elevation: 1,
+        iconTheme: const IconThemeData(color: Colors.black),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Card(
-          elevation: 5,
+          elevation: 4,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           child: Padding(
             padding: const EdgeInsets.all(20),
             child: Form(
               key: _formKey,
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const Text(
                     'Ingresa los datos de tu tarjeta',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 20),
+
                   TextFormField(
                     controller: _cardController,
                     maxLength: 19,
@@ -107,12 +105,11 @@ class _DepositoPageState extends State<DepositoPage> {
                       border: OutlineInputBorder(),
                       prefixIcon: Icon(Icons.credit_card),
                     ),
-                    validator: (value) {
-                      if (value == null || value.length < 16) return 'Número inválido';
-                      return null;
-                    },
+                    validator: (value) =>
+                        value == null || value.length < 16 ? 'Número inválido' : null,
                   ),
                   const SizedBox(height: 12),
+
                   TextFormField(
                     controller: _nameController,
                     decoration: const InputDecoration(
@@ -120,9 +117,11 @@ class _DepositoPageState extends State<DepositoPage> {
                       border: OutlineInputBorder(),
                       prefixIcon: Icon(Icons.person),
                     ),
-                    validator: (value) => value == null || value.isEmpty ? 'Campo requerido' : null,
+                    validator: (value) =>
+                        value == null || value.isEmpty ? 'Campo requerido' : null,
                   ),
                   const SizedBox(height: 12),
+
                   Row(
                     children: [
                       Expanded(
@@ -156,9 +155,10 @@ class _DepositoPageState extends State<DepositoPage> {
                     ],
                   ),
                   const SizedBox(height: 16),
+
                   TextFormField(
                     controller: _montoController,
-                    keyboardType: TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     decoration: const InputDecoration(
                       labelText: 'Monto a transferir',
                       prefixIcon: Icon(Icons.attach_money),
@@ -172,33 +172,37 @@ class _DepositoPageState extends State<DepositoPage> {
                     },
                   ),
                   const SizedBox(height: 12),
+
                   Wrap(
                     spacing: 10,
                     children: montosRapidos.map((monto) {
-                      return ElevatedButton(
+                      return OutlinedButton(
                         onPressed: () => _seleccionarMonto(monto),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green.shade100,
-                          foregroundColor: Colors.green.shade900,
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Colors.black),
+                          foregroundColor: Colors.black,
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         ),
                         child: Text('\$${monto.toStringAsFixed(0)}'),
                       );
                     }).toList(),
                   ),
                   const SizedBox(height: 24),
+
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: isLoading ? null : _hacerDeposito,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green.shade700,
+                        backgroundColor: Colors.black,
                         padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
                       child: isLoading
                           ? const CircularProgressIndicator(color: Colors.white)
                           : const Text(
                               'Depositar',
-                              style: TextStyle(fontSize: 18, color: Colors.white),
+                              style: TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold),
                             ),
                     ),
                   ),

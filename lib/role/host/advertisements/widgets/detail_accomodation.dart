@@ -61,29 +61,65 @@ class _DetailAccomodationScreenState extends State<DetailAccomodationScreen> {
     }).join(' ');
   }
 
-  void _confirmarEliminar(BuildContext context, String id) async {
-    final confirmacion = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('¿Eliminar alojamiento?'),
-        content: const Text('¿Estás seguro de que deseas eliminar este alojamiento?'),
+ void _confirmarEliminar(BuildContext context, String id) async {
+  final confirmacion = await showDialog<bool>(
+    context: context,
+    barrierDismissible: false, 
+    builder: (context) {
+      return AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        titlePadding: const EdgeInsets.only(top: 20, left: 24, right: 24),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        title: Column(
+          children: const [
+            Icon(Icons.delete_forever, size: 48, color: Colors.redAccent),
+            SizedBox(height: 12),
+            Text(
+              '¿Eliminar alojamiento?',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        content: const Text(
+          'Esta acción eliminará el alojamiento de forma permanente. ¿Deseas continuar?',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 16, color: Colors.black87),
+        ),
         actions: [
-          TextButton(
-            child: const Text('Cancelar'),
+          OutlinedButton(
             onPressed: () => Navigator.of(context).pop(false),
+            style: OutlinedButton.styleFrom(
+              side: const BorderSide(color: Colors.black),
+              foregroundColor: Colors.black,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            ),
+            child: const Text('Cancelar'),
           ),
-          TextButton(
-            child: const Text('Eliminar'),
+          ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.black,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text(
+              'Eliminar',
+              style: TextStyle(color: Colors.white),
+            ),
           ),
         ],
-      ),
-    );
+      );
+    },
+  );
 
-    if (confirmacion == true) {
-      await _eliminarAlojamiento(context, id);
-    }
+  if (confirmacion == true) {
+    await _eliminarAlojamiento(context, id);
   }
+}
+
 
   Future<void> _eliminarAlojamiento(BuildContext context, String id) async {
     print('🗑️ Intentando eliminar alojamiento con id: $id');
