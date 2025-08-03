@@ -15,7 +15,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final Color primaryColor = const Color(0xFF001D5A);
   bool loading = false;
   bool showPassword = false;
-  bool _aceptTerms = false ;
+  bool _aceptTerms = false;
 
   final Map<String, TextEditingController> _controllers = {
     'nombre': TextEditingController(),
@@ -30,13 +30,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   void register() async {
     if (!_formKey.currentState!.validate()) return;
-    
-    if(!_aceptTerms){
+
+    if (!_aceptTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Debes aceptar los Términos y COndiciones')),
+        const SnackBar(content: Text('Debes aceptar los Términos y Condiciones')),
       );
-       return;
+      return;
     }
+
     setState(() => loading = true);
 
     final userData = {
@@ -63,7 +64,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
- @override
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
@@ -114,7 +115,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 _buildPasswordField(),
                 const SizedBox(height: 16),
 
-                // ✅ Checkbox de términos
                 Row(
                   children: [
                     Checkbox(
@@ -124,9 +124,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     Expanded(
                       child: GestureDetector(
                         onTap: () async {
-                          const url = 'https://aulasvirtuales.epn.edu.ec';
+                          const url = 'https://desoletravels.netlify.app/terminos-y-condiciones';
                           if (await canLaunchUrl(Uri.parse(url))) {
-                            await launchUrl(Uri.parse(url));
+                            await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('No se pudo abrir el enlace')),
+                            );
                           }
                         },
                         child: RichText(
@@ -148,6 +152,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                   ],
                 ),
+
                 const SizedBox(height: 16),
 
                 loading

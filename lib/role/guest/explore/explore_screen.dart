@@ -1,4 +1,6 @@
+// ... tus imports
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:desole_app/services/accomodation_services.dart';
 import 'package:desole_app/role/guest/explore/widgets/detail_screen.dart';
 import '../../../data/models/Alojamientos.dart';
@@ -10,9 +12,10 @@ class ExploreScreen extends StatefulWidget {
   State<ExploreScreen> createState() => _ExploreScreenState();
 }
 
-class _ExploreScreenState extends State<ExploreScreen> {
+class _ExploreScreenState extends State<ExploreScreen> with SingleTickerProviderStateMixin {
   final AccomodationServices _service = AccomodationServices();
   late Future<List<Alojamiento>> _futureAccommodations;
+  late AnimationController _animationController;
 
   List<Alojamiento> _todosLosAlojamientos = [];
   List<Alojamiento> _alojamientosFiltrados = [];
@@ -26,6 +29,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
   @override
   void initState() {
     super.initState();
+    _animationController = AnimationController(vsync: this, duration: const Duration(milliseconds: 500));
     _futureAccommodations = _service.getAllAccommodations();
     _futureAccommodations.then((alojamientos) {
       final activos = alojamientos
@@ -34,24 +38,47 @@ class _ExploreScreenState extends State<ExploreScreen> {
       setState(() {
         _todosLosAlojamientos = activos;
         _alojamientosFiltrados = activos;
+        _animationController.forward();
       });
     });
   }
 
-  void _aplicarFiltros() {
-    List<Alojamiento> filtrados = _todosLosAlojamientos.where((a) {
-      final coincideProvincia = _provinciaSeleccionada == null || a.provincia == _provinciaSeleccionada;
-      final coincideTipo = _tipoSeleccionado == null || a.tipoAlojamiento == _tipoSeleccionado;
-      final coincidePrecioMin = _precioMin == null || a.precioNoche >= _precioMin!;
-      final coincidePrecioMax = _precioMax == null || a.precioNoche <= _precioMax!;
-      final coincideCalificacion = _calificacionMinima == null || (a.calificacionPromedio ?? 0) >= _calificacionMinima!;
-      return coincideProvincia && coincideTipo && coincidePrecioMin && coincidePrecioMax && coincideCalificacion;
-    }).toList();
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  void _aplicarFiltros() async {
+  try {
+    print('Enviando filtros:');
+    print('Provincia: $_provinciaSeleccionada');
+    print('Tipo de alojamiento: $_tipoSeleccionado');
+    print('Precio mínimo: $_precioMin');
+    print('Precio máximo: $_precioMax');
+    print('Calificación mínima: $_calificacionMinima');
+
+    final filtrados = await _service.getAccommodationsFiltered(
+      provincia: _provinciaSeleccionada,
+      tipoAlojamiento: _tipoSeleccionado,
+      precioMin: _precioMin,
+      precioMax: _precioMax,
+      calificacion: _calificacionMinima,
+    );
+
+   
 
     setState(() {
       _alojamientosFiltrados = filtrados;
+      _animationController.forward(from: 0);
     });
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('No se encontró resultados con los filtros seleccionados')),
+    );
   }
+}
+
 
   List<String> get provinciasUnicas =>
       _todosLosAlojamientos.map((a) => a.provincia).toSet().toList()..sort();
@@ -59,130 +86,171 @@ class _ExploreScreenState extends State<ExploreScreen> {
   List<String> get tiposUnicos =>
       _todosLosAlojamientos.map((a) => a.tipoAlojamiento).toSet().toList()..sort();
 
-  void _mostrarDialogoProvincia() {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        String? seleccionTemporal = _provinciaSeleccionada;
+void _mostrarFiltrosCompletos() {
+  final TextEditingController minPrecioController = TextEditingController(
+    text: _precioMin?.toStringAsFixed(0) ?? '',
+  );
+  final TextEditingController maxPrecioController = TextEditingController(
+    text: _precioMax?.toStringAsFixed(0) ?? '',
+  );
 
-        return Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text("Seleccionar provincia", style: TextStyle(fontSize: 18)),
-              const SizedBox(height: 10),
-              DropdownButton<String>(
-                isExpanded: true,
-                value: seleccionTemporal,
-                hint: const Text("Selecciona una provincia"),
-                items: provinciasUnicas.map((provincia) {
-                  return DropdownMenuItem<String>(
-                    value: provincia,
-                    child: Text(provincia),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _provinciaSeleccionada = value;
-                    Navigator.pop(context);
-                    _aplicarFiltros();
-                  });
-                },
-              ),
-              const SizedBox(height: 10),
-              TextButton(
-                onPressed: () {
-                  setState(() {
-                    _provinciaSeleccionada = null;
-                    Navigator.pop(context);
-                    _aplicarFiltros();
-                  });
-                },
-                child: const Text("Quitar filtro"),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
+  double tempCalificacion = _calificacionMinima ?? 0;
 
-  void _mostrarDialogoPrecio() {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text("Rango de precios", style: TextStyle(fontSize: 18)),
-              const SizedBox(height: 10),
-              TextField(
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Precio mínimo'),
-                onChanged: (value) => _precioMin = double.tryParse(value),
-              ),
-              TextField(
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Precio máximo'),
-                onChanged: (value) => _precioMax = double.tryParse(value),
-              ),
-              const SizedBox(height: 10),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  _aplicarFiltros();
-                },
-                child: const Text("Aplicar"),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.white,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+    ),
+    builder: (context) {
+      return Padding(
+        padding: EdgeInsets.only(
+          left: 20,
+          right: 20,
+          top: 20,
+          bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+        ),
+        child: StatefulBuilder(
+          builder: (context, setModalState) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Center(
+                  child: Text("Filtros de búsqueda", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                ),
+                const SizedBox(height: 20),
 
-  void _mostrarDialogoCalificacion() {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text("Calificación mínima", style: TextStyle(fontSize: 18)),
-              const SizedBox(height: 10),
-              TextField(
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Mínimo de estrellas'),
-                onChanged: (value) => _calificacionMinima = double.tryParse(value),
-              ),
-              const SizedBox(height: 10),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  _aplicarFiltros();
-                },
-                child: const Text("Aplicar"),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
+                // Provincia
+                DropdownButtonFormField<String>(
+                  decoration: InputDecoration(
+                    labelText: "Provincia",
+                    filled: true,
+                    fillColor: Colors.grey.shade100,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  value: _provinciaSeleccionada,
+                  isExpanded: true,
+                  items: provinciasUnicas.map((p) => DropdownMenuItem(value: p, child: Text(p))).toList(),
+                  onChanged: (val) => setModalState(() => _provinciaSeleccionada = val),
+                ),
+
+                const SizedBox(height: 16),
+
+                // Tipo alojamiento
+                DropdownButtonFormField<String>(
+                  decoration: InputDecoration(
+                    labelText: "Tipo de alojamiento",
+                    filled: true,
+                    fillColor: Colors.grey.shade100,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  value: _tipoSeleccionado,
+                  isExpanded: true,
+                  items: tiposUnicos.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
+                  onChanged: (val) => setModalState(() => _tipoSeleccionado = val),
+                ),
+
+                const SizedBox(height: 20),
+
+                const Text("Precio por noche"),
+                const SizedBox(height: 6),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: minPrecioController,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                        decoration: const InputDecoration(
+                          labelText: "Mínimo",
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.attach_money),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextFormField(
+                        controller: maxPrecioController,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                        decoration: const InputDecoration(
+                          labelText: "Máximo",
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.attach_money),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 20),
+                const Text("Calificación mínima"),
+                Slider(
+                  value: tempCalificacion,
+                  min: 0,
+                  max: 5,
+                  divisions: 5,
+                  label: '${tempCalificacion.toStringAsFixed(1)} ★',
+                  activeColor: Colors.amber,
+                  onChanged: (value) => setModalState(() => tempCalificacion = value),
+                ),
+
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () {
+                          setState(() {
+                            _provinciaSeleccionada = null;
+                            _tipoSeleccionado = null;
+                            _precioMin = null;
+                            _precioMax = null;
+                            _calificacionMinima = null;
+                            Navigator.pop(context);
+                            _aplicarFiltros();
+                          });
+                        },
+                        child: const Text("Limpiar Filtros" ,style: TextStyle(color: Colors.black),),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.black,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _precioMin = double.tryParse(minPrecioController.text);
+                            _precioMax = double.tryParse(maxPrecioController.text);
+                            _calificacionMinima = tempCalificacion;
+                            Navigator.pop(context);
+                            _aplicarFiltros();
+                          });
+                        },
+                        child: const Text("Aplicar Filtros"),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            );
+          },
+        ),
+      );
+    },
+  );
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -194,68 +262,32 @@ class _ExploreScreenState extends State<ExploreScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  FiltroChip(
-                    icono: Icons.location_on,
-                    texto: _provinciaSeleccionada ?? "Provincia",
-                    activo: _provinciaSeleccionada != null,
-                    onTap: _mostrarDialogoProvincia,
-                  ),
-                  for (var tipo in tiposUnicos)
-                    FiltroChip(
-                      icono: Icons.home_work,
-                      texto: tipo,
-                      activo: _tipoSeleccionado == tipo,
-                      onTap: () {
-                        setState(() {
-                          _tipoSeleccionado = (_tipoSeleccionado == tipo) ? null : tipo;
-                        });
-                      },
-                    ),
-                  FiltroChip(
-                    icono: Icons.price_change,
-                    texto: "Precio",
-                    activo: _precioMin != null || _precioMax != null,
-                    onTap: _mostrarDialogoPrecio,
-                  ),
-                  FiltroChip(
-                    icono: Icons.star,
-                    texto: "Calificación",
-                    activo: _calificacionMinima != null,
-                    onTap: _mostrarDialogoCalificacion,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Align(
               alignment: Alignment.centerRight,
               child: ElevatedButton.icon(
-                onPressed: _aplicarFiltros,
-                icon: const Icon(Icons.filter_alt),
-                label: const Text('Aplicar Filtros'),
+                onPressed: _mostrarFiltrosCompletos,
+                icon: const Icon(Icons.tune),
+                label: const Text('Filtros'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.deepPurple,
+                  backgroundColor: Colors.black,
                   foregroundColor: Colors.white,
                 ),
               ),
             ),
           ),
           Expanded(
-            child: _alojamientosFiltrados.isEmpty
-                ? const Center(child: Text('No hay alojamientos que coincidan con los filtros.'))
-                : ListView.builder(
-                    itemCount: _alojamientosFiltrados.length,
-                    itemBuilder: (context, index) {
-                      final alojamiento = _alojamientosFiltrados[index];
-                      return CardAccomodations(destino: alojamiento);
-                    },
-                  ),
+            child: FadeTransition(
+              opacity: _animationController,
+              child: _alojamientosFiltrados.isEmpty
+                  ? const Center(child: Text('No hay alojamientos que coincidan con los filtros.'))
+                  : ListView.builder(
+                      itemCount: _alojamientosFiltrados.length,
+                      itemBuilder: (context, index) {
+                        final alojamiento = _alojamientosFiltrados[index];
+                        return CardAccomodations(destino: alojamiento);
+                      },
+                    ),
+            ),
           ),
         ],
       ),
@@ -263,7 +295,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
   }
 }
 
-// CHIP DE FILTRO PERSONALIZADO
+
+
+/*
 class FiltroChip extends StatelessWidget {
   final IconData icono;
   final String texto;
@@ -311,7 +345,7 @@ class FiltroChip extends StatelessWidget {
     );
   }
 }
-
+*/
 class CardAccomodations extends StatefulWidget {
   final Alojamiento destino;
 

@@ -1,4 +1,3 @@
-import 'package:desole_app/role/guest/profile/widgets/deposit_balance.dart';
 import 'package:desole_app/services/users_services.dart';
 import 'package:flutter/material.dart';
 

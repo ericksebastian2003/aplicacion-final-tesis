@@ -194,6 +194,42 @@ class AccomodationServices {
     return false;
   }
 }
+Future<List<Alojamiento>> getAccommodationsFiltered({
+  String? provincia,
+  String? tipoAlojamiento,
+  double? precioMin,
+  double? precioMax,
+  double? calificacion,
+}) async {
+  try {
+    final Map<String, dynamic> queryParams = {};
+
+    // Solo agregar si no es nulo y tiene valor significativo
+    if (provincia != null && provincia.isNotEmpty) queryParams['provincia'] = provincia;
+    if (tipoAlojamiento != null && tipoAlojamiento.isNotEmpty) queryParams['tipoAlojamiento'] = tipoAlojamiento;
+    if (precioMin != null && precioMin > 0) queryParams['precioMin'] = precioMin;
+    if (precioMax != null && precioMax > 0) queryParams['precioMax'] = precioMax;
+    if (calificacion != null && calificacion > 0) queryParams['calificacion'] = calificacion;
+
+    print('🔍 Enviando parámetros filtrados: $queryParams');
+
+    final response = await _dio.get(
+      baseUrl,
+      queryParameters: queryParams,
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = response.data;
+      return data.map((e) => Alojamiento.fromJson(e)).toList();
+    } else {
+      throw Exception('Error al obtener alojamientos filtrados: ${response.statusCode}');
+    }
+  } catch (e) {
+    throw Exception('Error al conectar con el servidor: $e');
+  }
+}
+
+
 
 
   // Obtener alojamiento con sus fotos
@@ -211,4 +247,5 @@ class AccomodationServices {
       throw Exception('Error al obtener alojamiento con fotos: $e');
     }
   }
+
 }
