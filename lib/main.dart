@@ -6,12 +6,15 @@ import 'role/admin/dashboard/admin_dashboard.dart';
 import 'role/auth/login_screen.dart';
 import 'providers/session_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 final RouteObserver<ModalRoute<void>> routeObserver = RouteObserver<ModalRoute<void>>();
 void main() async {
 
 
-  WidgetsFlutterBinding.ensureInitialized();  
+  WidgetsFlutterBinding.ensureInitialized(); 
+   // Cargar datos de fecha en español
+  await initializeDateFormatting('es', null); 
   final sessionProvider = SessionProvider();
   await sessionProvider.loadSessionFromPrefs();
 

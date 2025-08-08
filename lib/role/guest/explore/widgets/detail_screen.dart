@@ -1,5 +1,6 @@
 import 'package:desole_app/data/models/FotoAlojamientos.dart';
 import 'package:desole_app/role/guest/explore/widgets/reserve_destination.dart';
+import 'package:desole_app/role/guest/reserves/widgets/details_guest_reservation.dart';
 import 'package:desole_app/services/accomodation_services.dart';
 import 'package:desole_app/services/complaints_services.dart';
 import 'package:flutter/material.dart';
@@ -7,7 +8,6 @@ import '../../../../data/models/Alojamientos.dart';
 
 class DetailScreen extends StatefulWidget {
   final String id;
-
   const DetailScreen({super.key, required this.id});
 
   @override
@@ -432,13 +432,13 @@ class _DetailScreenState extends State<DetailScreen> {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (_) => ReserveDestination(
+                                      builder: (_) => ReservesGuestScreen(
                                         duenio: accommodation!.anfitrion.nombre,
                                         alojamientoId: accommodation!.id,
                                         precioPorNoche: accommodation!.precioNoche.toInt(),
-                                        maxHuespedes:4,
-                                      ),
-                                    ),
+                                        maxHuespedes:accommodation!.maxHuespedes.toInt(),
+                                  
+                                      ))
                                   );
                                 },
                                 child: const Text(
@@ -456,3 +456,4 @@ class _DetailScreenState extends State<DetailScreen> {
     );
   }
 }
+

@@ -2,6 +2,7 @@ import 'package:desole_app/data/models/Reservas.dart';
 import 'package:desole_app/services/reserves_services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+/*
 class DeleteReservation extends StatefulWidget{
   const DeleteReservation({
     super.key,
@@ -73,3 +74,4 @@ void _confirmarEliminar(BuildContext context, String id) async {
     );
   }
 }
+*/

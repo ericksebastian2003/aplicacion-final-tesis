@@ -150,7 +150,7 @@ class CardReserves extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => DetailGuestReservation(reservas: reservas),
+              builder: (_) => ReserveDestination(reservas: reservas),
             ),
           );
         },

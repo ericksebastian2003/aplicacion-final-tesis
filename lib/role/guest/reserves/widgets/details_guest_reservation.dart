@@ -7,16 +7,16 @@ import 'package:flutter/material.dart';
 import 'package:collection/collection.dart';
 import 'package:intl/intl.dart';
 
-class DetailGuestReservation extends StatefulWidget {
+class ReserveDestination extends StatefulWidget {
   final Reservas reservas;
 
-  const DetailGuestReservation({super.key, required this.reservas});
+  const ReserveDestination({super.key, required this.reservas});
 
   @override
-  State<DetailGuestReservation> createState() => _DetailGuestReservationState();
+  State<ReserveDestination> createState() => _ReserveDestinationState();
 }
 
-class _DetailGuestReservationState extends State<DetailGuestReservation> {
+class _ReserveDestinationState extends State<ReserveDestination> {
   late Reservas reservas;
   final ReservesServices _services = ReservesServices();
 
@@ -36,9 +36,10 @@ class _DetailGuestReservationState extends State<DetailGuestReservation> {
   }
 
   String formatDateWithMonthName(DateTime date) {
-    final d = date.toLocal();
-    return DateFormat('dd-MMM-yyyy', 'es').format(d);
-  }
+  final d = date.toLocal();
+  return DateFormat('dd-MMMM-yyyy', 'es').format(d);
+}
+
 
   Future<void> _loadCalificacion() async {
     setState(() => _isLoadingCalificacion = true);
@@ -152,37 +153,37 @@ class _DetailGuestReservationState extends State<DetailGuestReservation> {
     }
   }
 
-  Future<void> _cancelarReserva(BuildContext context, String id) async {
-    setState(() {
-      _isProcessing = true;
-      _mensaje = null; // Limpiamos el mensaje anterior
-    });
-    
-    try {
-      final message = await _services.delereservations(id);
-      
-      if (mounted) {
-        setState(() {
-          _isProcessing = false;
-          _mensaje = message as String?;
-          // Si el mensaje contiene "Error", lo consideramos un error
-          _isError = message ?? false; 
-        });
+Future<void> _cancelarReserva(BuildContext context, String id) async {
+  setState(() {
+    _isProcessing = true;
+    _mensaje = null;
+  });
 
-        if (!_isError) {
-          Navigator.pop(context, true);
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isProcessing = false;
-          _mensaje = 'Ocurrió un error al cancelar la reserva.';
-          _isError = true;
-        });
+  try {
+    final result = await _services.delereservations(id);
+
+    if (mounted) {
+      setState(() {
+        _isProcessing = false;
+        _mensaje = result['msg'];
+        _isError = !result['success'];
+      });
+
+      if (result['success']) {
+        Navigator.pop(context, true);
       }
     }
+  } catch (e) {
+    if (mounted) {
+      setState(() {
+        _isProcessing = false;
+        _mensaje = 'Ocurrió un error al cancelar la reserva.';
+        _isError = true;
+      });
+    }
   }
+}
+
 
   Future<void> _showCalificationModal() async {
     if (_calificacionExistente != null) {
@@ -381,6 +382,7 @@ class _DetailGuestReservationState extends State<DetailGuestReservation> {
                       const SizedBox(height: 16),
                       _buildActionButton('Cancelar reserva', Colors.red.shade700, () {
                         _confirmarEliminar(context, reservas.id);
+                        _buildMensaje();
                       }),
                     ],
                   ),

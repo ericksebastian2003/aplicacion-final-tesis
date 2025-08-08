@@ -64,6 +64,31 @@ class _CreateDetailsState extends State<CreateDetails> {
     super.dispose();
   }
 
+  // NUEVO: Widget para mostrar mensajes de retroalimentación
+  void _buildMensajes(String message, Color color, IconData icon) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(icon, color: Colors.white),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                message,
+                style: const TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: color,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+      ),
+    );
+  }
+
   Future<void> _enviarFormulario() async {
     if (_formKey.currentState!.validate()) {
       final formProvider = Provider.of<FormAlojamientoProvider>(context, listen: false);
@@ -107,9 +132,7 @@ class _CreateDetailsState extends State<CreateDetails> {
           final alojamientoId = response.data['id'] ?? response.data['_id'];
 
           if (alojamientoId == null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Error: no se recibió el ID del alojamiento')),
-            );
+            _buildMensajes('Error: no se recibió el ID del alojamiento', Colors.red, Icons.error);
             setState(() => _enviando = false);
             return;
           }
@@ -118,24 +141,18 @@ class _CreateDetailsState extends State<CreateDetails> {
           if (formProvider.imagenesSeleccionadas.length >= 3) {
             final exitoSubida = await _subirImagenes(alojamientoId, token, formProvider);
             if (!exitoSubida) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Error al subir imágenes')),
-              );
+              _buildMensajes('Error al subir imágenes', Colors.red, Icons.warning);
               setState(() => _enviando = false);
               return;
             }
           } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Debe subir al menos 3 imágenes')),
-            );
+            _buildMensajes('Debe subir al menos 3 imágenes', Colors.red, Icons.warning);
             setState(() => _enviando = false);
             return;
           }
 
           // Si todo bien
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Alojamiento creado con éxito')),
-          );
+          _buildMensajes('Alojamiento creado con éxito', Colors.green, Icons.check_circle);
           formProvider.reset();
 
           final nombre = prefs.getString('nombre') ?? 'Anfitrión';
@@ -152,15 +169,11 @@ class _CreateDetailsState extends State<CreateDetails> {
             (Route<dynamic> route) => false,
           );
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Error al crear alojamiento')),
-          );
+          _buildMensajes('Error al crear alojamiento', Colors.red, Icons.error);
         }
       } catch (e) {
         print('❌ Error al crear alojamiento: $e');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        _buildMensajes('Error: $e', Colors.red, Icons.error);
       } finally {
         setState(() => _enviando = false);
       }
@@ -221,12 +234,16 @@ class _CreateDetailsState extends State<CreateDetails> {
     required TextEditingController controller,
     required String? Function(String?) validator,
     TextInputType keyboardType = TextInputType.text,
+    int? maxCaracteres, // NUEVO: Parámetro para el máximo de caracteres
   }) {
     return TextFormField(
       controller: controller,
+      maxLength: maxCaracteres, // Usando el nuevo parámetro
+      maxLines: keyboardType == TextInputType.multiline ? null : 1,
       decoration: InputDecoration(
         labelText: label,
         border: const OutlineInputBorder(),
+        counterText: maxCaracteres != null ? '${controller.text.length}/$maxCaracteres' : null, // Muestra el contador de caracteres
       ),
       keyboardType: keyboardType,
       validator: validator,
@@ -238,8 +255,8 @@ class _CreateDetailsState extends State<CreateDetails> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Detalles del alojamiento',
-          style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
-        )),
+            style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+            )),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -267,6 +284,7 @@ class _CreateDetailsState extends State<CreateDetails> {
                   return null;
                 },
                 keyboardType: TextInputType.multiline,
+                maxCaracteres: 250, // AQUÍ: Se establece el límite de 250 caracteres
               ),
               const SizedBox(height: 18),
               DropdownButtonFormField<String>(

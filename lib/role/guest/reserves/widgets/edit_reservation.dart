@@ -1,8 +1,6 @@
-
 import 'package:flutter/material.dart';
 import 'package:desole_app/data/models/Reservas.dart';
 import 'package:desole_app/services/reserves_services.dart';
-import 'package:intl/intl.dart';
 
 class EditReservationScreen extends StatefulWidget {
   final Reservas reservas;
@@ -17,12 +15,6 @@ class _EditReservationScreenState extends State<EditReservationScreen> {
   final _service = ReservesServices();
   final _formKey = GlobalKey<FormState>();
   late TextEditingController numerohuespedesController;
-
-  // Variables de estado para las fechas
-  late DateTime _selectedCheckInDate;
-  late DateTime _selectedCheckOutDate;
-
-  // Variables de estado para la carga y el mensaje
   bool _isLoading = false;
   String? _mensaje;
   bool _isError = false;
@@ -32,8 +24,6 @@ class _EditReservationScreenState extends State<EditReservationScreen> {
     super.initState();
     numerohuespedesController =
         TextEditingController(text: widget.reservas.numeroHuespedes.toString());
-    _selectedCheckInDate = widget.reservas.fechaCheckIn;
-    _selectedCheckOutDate = widget.reservas.fechaCheckOut;
   }
 
   @override
@@ -42,68 +32,12 @@ class _EditReservationScreenState extends State<EditReservationScreen> {
     super.dispose();
   }
 
-  // Método para manejar la selección de fechas
-  Future<void> _pickDate(BuildContext context, bool isCheckIn) async {
-    final initialDate = isCheckIn ? _selectedCheckInDate : _selectedCheckOutDate;
-    final firstDate = DateTime.now();
-    final lastDate = DateTime(2100);
 
-    final newDate = await showDatePicker(
-      context: context,
-      initialDate: initialDate,
-      firstDate: firstDate,
-      lastDate: lastDate,
-      builder: (context, child) {
-        return Theme(
-          data: ThemeData.light().copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Colors.black, // Color principal del picker
-              onPrimary: Colors.white, // Color del texto en el encabezado
-              surface: Colors.white, // Color de la superficie del calendario
-              onSurface: Colors.black, // Color del texto del calendario
-            ),
-            dialogBackgroundColor: Colors.white,
-          ),
-          child: child!,
-        );
-      },
-    );
-
-    if (newDate != null) {
-      setState(() {
-        if (isCheckIn) {
-          _selectedCheckInDate = newDate;
-          // Si la fecha de salida es anterior a la de entrada, se actualiza automáticamente
-          if (_selectedCheckOutDate.isBefore(_selectedCheckInDate)) {
-            _selectedCheckOutDate = _selectedCheckInDate.add(const Duration(days: 1));
-          }
-        } else {
-          // No permitir que la fecha de salida sea anterior a la de entrada
-          if (newDate.isAfter(_selectedCheckInDate)) {
-            _selectedCheckOutDate = newDate;
-          } else {
-            // No hacemos nada, pero podríamos mostrar un mensaje de error
-            _mensaje = 'La fecha de salida debe ser posterior a la de entrada.';
-            _isError = true;
-          }
-        }
-      });
-    }
-  }
 
   void _saveChanges() async {
     if (!_formKey.currentState!.validate()) {
       _mensaje = 'Por favor, corrige los errores en el formulario.';
       _isError = true;
-      return;
-    }
-
-    // Validación adicional de fechas
-    if (_selectedCheckOutDate.isBefore(_selectedCheckInDate) || _selectedCheckOutDate.isAtSameMomentAs(_selectedCheckInDate)) {
-      setState(() {
-        _mensaje = 'La fecha de salida debe ser posterior a la de entrada.';
-        _isError = true;
-      });
       return;
     }
 
@@ -113,8 +47,6 @@ class _EditReservationScreenState extends State<EditReservationScreen> {
     });
 
     final updateData = {
-      "fechaCheckIn": DateFormat('yyyy-MM-dd').format(_selectedCheckInDate),
-      "fechaCheckOut": DateFormat('yyyy-MM-dd').format(_selectedCheckOutDate),
       "numeroHuespedes": int.parse(numerohuespedesController.text),
     };
 
@@ -217,27 +149,6 @@ class _EditReservationScreenState extends State<EditReservationScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Fechas de la Reserva',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 16),
-                  // Selector de fecha de Check-In
-                  _buildDateSelector(
-                    context,
-                    'Fecha de ingreso',
-                    _selectedCheckInDate,
-                    () => _pickDate(context, true),
-                  ),
-                  const SizedBox(height: 16),
-                  // Selector de fecha de Check-Out
-                  _buildDateSelector(
-                    context,
-                    'Fecha de salida',
-                    _selectedCheckOutDate,
-                    () => _pickDate(context, false),
-                  ),
-                  const SizedBox(height: 30),
                   // Campo de número de huéspedes
                   const Text(
                     'Detalles de la Reserva',
@@ -286,33 +197,7 @@ class _EditReservationScreenState extends State<EditReservationScreen> {
     );
   }
 
-  // Nuevo widget para el selector de fecha con mejor UI
-  Widget _buildDateSelector(
-    BuildContext context,
-    String label,
-    DateTime date,
-    VoidCallback onPressed,
-  ) {
-    return InkWell(
-      onTap: onPressed,
-      child: InputDecorator(
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-          contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          prefixIcon: const Icon(Icons.calendar_today, color: Colors.black),
-        ),
-        child: Text(
-          DateFormat('EEE, d MMM y').format(date),
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
-        ),
-      ),
-    );
-  }
-
+  
   Widget _buildTextField(
     TextEditingController controller,
     String label,

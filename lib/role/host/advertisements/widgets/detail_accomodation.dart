@@ -3,8 +3,8 @@ import 'package:desole_app/data/models/FotoAlojamientos.dart';
 import 'package:flutter/material.dart';
 import 'package:desole_app/role/host/advertisements/widgets/edit_accommodations.dart';
 import 'package:desole_app/services/accomodation_services.dart';
-import 'dart:convert';
 import 'package:intl/intl.dart';
+
 class DetailAccomodationScreen extends StatefulWidget {
   final String id;
 
@@ -35,6 +35,31 @@ class _DetailAccomodationScreenState extends State<DetailAccomodationScreen> {
     super.dispose();
   }
 
+  // Agregado para mostrar mensajes de forma consistente
+  void _buildMensajes(String message, Color color, IconData icon) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(icon, color: Colors.white),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                message,
+                style: const TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: color,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+      ),
+    );
+  }
+
   Future<void> fetchAlojamientoDetail() async {
     print('🚀 Intentando cargar detalle para id: ${widget.id}');
     try {
@@ -51,6 +76,8 @@ class _DetailAccomodationScreenState extends State<DetailAccomodationScreen> {
       setState(() {
         isLoading = false;
       });
+      // Muestra un mensaje de error si la carga falla
+      _buildMensajes('Error al cargar el detalle del alojamiento.', Colors.red, Icons.error);
     }
   }
 
@@ -61,86 +88,79 @@ class _DetailAccomodationScreenState extends State<DetailAccomodationScreen> {
     }).join(' ');
   }
 
- void _confirmarEliminar(BuildContext context, String id) async {
-  final confirmacion = await showDialog<bool>(
-    context: context,
-    barrierDismissible: false, 
-    builder: (context) {
-      return AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        titlePadding: const EdgeInsets.only(top: 20, left: 24, right: 24),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-        actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        title: Column(
-          children: const [
-            Icon(Icons.delete_forever, size: 48, color: Colors.redAccent),
-            SizedBox(height: 12),
-            Text(
-              '¿Eliminar alojamiento?',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+  void _confirmarEliminar(BuildContext context, String id) async {
+    final confirmacion = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          titlePadding: const EdgeInsets.only(top: 20, left: 24, right: 24),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          title: Column(
+            children: const [
+              Icon(Icons.delete_forever, size: 48, color: Colors.redAccent),
+              SizedBox(height: 12),
+              Text(
+                '¿Eliminar alojamiento?',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          content: const Text(
+            'Esta acción eliminará el alojamiento de forma permanente. ¿Deseas continuar?',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 16, color: Colors.black87),
+          ),
+          actions: [
+            OutlinedButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Colors.black),
+                foregroundColor: Colors.black,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              ),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.black,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              child: const Text(
+                'Eliminar',
+                style: TextStyle(color: Colors.white),
+              ),
             ),
           ],
-        ),
-        content: const Text(
-          'Esta acción eliminará el alojamiento de forma permanente. ¿Deseas continuar?',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 16, color: Colors.black87),
-        ),
-        actions: [
-          OutlinedButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: Colors.black),
-              foregroundColor: Colors.black,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            ),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.black,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-            child: const Text(
-              'Eliminar',
-              style: TextStyle(color: Colors.white),
-            ),
-          ),
-        ],
-      );
-    },
-  );
+        );
+      },
+    );
 
-  if (confirmacion == true) {
-    await _eliminarAlojamiento(context, id);
+    if (confirmacion == true) {
+      await _eliminarAlojamiento(context, id);
+    }
   }
-}
 
   Future<void> _eliminarAlojamiento(BuildContext context, String id) async {
     print('🗑️ Intentando eliminar alojamiento con id: $id');
-
     try {
-      final success = await _service.deleteAccommodation(id);
+      final message = await _service.deleteAccommodation(id);
 
-      if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Alojamiento eliminado con éxito')),
-        );
-        Navigator.pop(context);
+      if (message.contains('Error')) {
+        _buildMensajes(message, Colors.red, Icons.error);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error al eliminar el alojamiento')),
-        );
+        _buildMensajes(message, Colors.green, Icons.check_circle);
+        Navigator.pop(context);
       }
     } catch (e) {
       print('❌ Error al eliminar: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al eliminar: $e')),
-      );
+      _buildMensajes('Error al eliminar: $e', Colors.red, Icons.error);
     }
   }
 
@@ -150,9 +170,9 @@ class _DetailAccomodationScreenState extends State<DetailAccomodationScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white.withOpacity(0.9),
         title: Text(
-          capitalizar(accommodation!.titulo),
+          accommodation != null ? capitalizar(accommodation!.titulo) : 'Detalle',
           style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
-          ),
+        ),
         actions: [
           if (accommodation != null)
             PopupMenuButton<String>(
@@ -196,104 +216,95 @@ class _DetailAccomodationScreenState extends State<DetailAccomodationScreen> {
                 )
               : Stack(
                   children: [
-                    // Carrusel de imágenes con sombra y bordes redondeados
                     if (fotos.isNotEmpty)
-  SizedBox(
-    height: 320,
-    child: Stack(
-      children: [
-        PageView.builder(
-          controller: _pageController,
-          itemCount: fotos.length,
-          onPageChanged: (index) {
-            setState(() {
-              _currentPage = index;
-            });
-          },
-          itemBuilder: (context, index) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(24),
-                child: Container(
-                  decoration: BoxDecoration(
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black26,
-                        blurRadius: 8,
-                        offset: Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Image.network(
-                    fotos[index].urlFoto,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    loadingBuilder: (context, child, loadingProgress) =>
-                        loadingProgress == null
-                            ? child
-                            : const Center(child: CircularProgressIndicator()),
-                    errorBuilder: (_, __, ___) =>
-                        const Icon(Icons.broken_image, size: 80, color: Colors.grey),
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-
-        // ⭐ Badge de calificación
-        Positioned(
-          top: 30,
-          right: 30,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.6),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.star, color: Colors.amber, size: 18),
-                const SizedBox(width: 4),
-                Text(
-                  "${accommodation!.calificacionPromedio.toStringAsFixed(1)} / 5.0",
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-          ),
-        ),
-
-        // Indicador de página
-        Positioned(
-          bottom: 20,
-          left: 0,
-          right: 0,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(
-              fotos.length,
-              (index) => AnimatedContainer(
-                duration: const Duration(milliseconds: 350),
-                margin: const EdgeInsets.symmetric(horizontal: 6),
-                width: _currentPage == index ? 16 : 10,
-                height: 10,
-                decoration: BoxDecoration(
-                  color: _currentPage == index
-                      ? Colors.white
-                      : Colors.white70,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
+                      SizedBox(
+                        height: 320,
+                        child: Stack(
+                          children: [
+                            PageView.builder(
+                              controller: _pageController,
+                              itemCount: fotos.length,
+                              onPageChanged: (index) {
+                                setState(() {
+                                  _currentPage = index;
+                                });
+                              },
+                              itemBuilder: (context, index) {
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(24),
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black26,
+                                            blurRadius: 8,
+                                            offset: Offset(0, 4),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Image.network(
+                                        fotos[index].urlFoto,
+                                        width: double.infinity,
+                                        fit: BoxFit.cover,
+                                        loadingBuilder: (context, child, loadingProgress) =>
+                                            loadingProgress == null
+                                                ? child
+                                                : const Center(child: CircularProgressIndicator()),
+                                        errorBuilder: (_, __, ___) =>
+                                            const Icon(Icons.broken_image, size: 80, color: Colors.grey),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                            Positioned(
+                              top: 30,
+                              right: 30,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.6),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.star, color: Colors.amber, size: 18),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      "${accommodation!.calificacionPromedio.toStringAsFixed(1)} / 5.0",
+                                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              bottom: 20,
+                              left: 0,
+                              right: 0,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: List.generate(
+                                  fotos.length,
+                                  (index) => AnimatedContainer(
+                                    duration: const Duration(milliseconds: 350),
+                                    margin: const EdgeInsets.symmetric(horizontal: 6),
+                                    width: _currentPage == index ? 16 : 10,
+                                    height: 10,
+                                    decoration: BoxDecoration(
+                                      color: _currentPage == index ? Colors.white : Colors.white70,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-
-                    // Contenido flotante con fondo blanco y bordes redondeados
                     DraggableScrollableSheet(
                       initialChildSize: 0.7,
                       minChildSize: 0.65,
@@ -306,35 +317,30 @@ class _DetailAccomodationScreenState extends State<DetailAccomodationScreen> {
                           boxShadow: [BoxShadow(blurRadius: 15, color: Colors.black12)],
                         ),
                         child: ListView(
-  controller: controller,
-  physics: const BouncingScrollPhysics(),
-  children: [
-
-    _infoTile(
-      icon: Icons.home_outlined,
-      title: "Título",
-      value: accommodation!.titulo,
-    ),
-    _infoTile(
-      icon: Icons.monetization_on_outlined,
-      title: "Precio por noche",
-      value: "\$${accommodation!.precioNoche}",
-    ),
-    _infoTile(
-      icon: Icons.star_outline,
-      title: "Calificación promedio",
-      value: "${accommodation!.calificacionPromedio.toStringAsFixed(1)} / 5.0",
-    ),
-    
-    _infoTile(
-      icon: Icons.calendar_today_outlined,
-      title: "Creado el",
-      value: DateFormat('dd/MM/yyyy').format(accommodation!.createdAt),
-    ),
-
-    const SizedBox(height: 28),
-
-
+                          controller: controller,
+                          physics: const BouncingScrollPhysics(),
+                          children: [
+                            _infoTile(
+                              icon: Icons.home_outlined,
+                              title: "Título",
+                              value: accommodation!.titulo,
+                            ),
+                            _infoTile(
+                              icon: Icons.monetization_on_outlined,
+                              title: "Precio por noche",
+                              value: "\$${accommodation!.precioNoche}",
+                            ),
+                            _infoTile(
+                              icon: Icons.star_outline,
+                              title: "Calificación promedio",
+                              value: "${accommodation!.calificacionPromedio.toStringAsFixed(1)} / 5.0",
+                            ),
+                            _infoTile(
+                              icon: Icons.calendar_today_outlined,
+                              title: "Creado el",
+                              value: DateFormat('dd/MM/yyyy').format(accommodation!.createdAt),
+                            ),
+                            const SizedBox(height: 28),
                             SizedBox(
                               width: double.infinity,
                               child: ElevatedButton(
@@ -346,8 +352,6 @@ class _DetailAccomodationScreenState extends State<DetailAccomodationScreen> {
                                   backgroundColor: Colors.black,
                                 ),
                                 onPressed: () async {
-                                  print('🚀 Enviando alojamiento a editar: ${jsonEncode(accommodation!.toJson())}');
-
                                   final result = await Navigator.push(
                                     context,
                                     MaterialPageRoute(
@@ -380,36 +384,34 @@ class _DetailAccomodationScreenState extends State<DetailAccomodationScreen> {
                 ),
     );
   }
-Widget _infoTile({required IconData icon, required String title, required String value}) {
-  return Card(
-    margin: const EdgeInsets.symmetric(vertical: 8),
-    elevation: 2,
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-    child: Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 28, color: Colors.black54),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title,
-                    style: const TextStyle(fontSize: 16, color: Colors.black54)),
-                const SizedBox(height: 4),
-                Text(value,
-                    style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87)),
-              ],
-            ),
-          )
-        ],
+
+  Widget _infoTile({required IconData icon, required String title, required String value}) {
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, size: 28, color: Colors.black54),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: const TextStyle(fontSize: 16, color: Colors.black54)),
+                  const SizedBox(height: 4),
+                  Text(value,
+                      style: const TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
+                ],
+              ),
+            )
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 }

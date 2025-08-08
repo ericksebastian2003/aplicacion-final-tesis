@@ -128,39 +128,104 @@ Future<List<Alojamiento>> getAllAccommodations() async {
     }
   }
 
-  // Actualizar alojamiento
-  Future<bool> updateAccommodation(String id, AlojamientoAnfitrion alojamiento) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token') ?? '';
-      _dio.options.headers['Authorization'] = 'Bearer $token';
-
-      final response = await _dio.put(
-        '$baseUrl/actualizar/$id',
-        data: alojamiento.toJson(),
-      );
-      return response.statusCode == 200;
-    } catch (e) {
-      throw Exception('Error al actualizar alojamiento: $e');
-    }
+// Actualizar alojamiento
+Future<String> updateAccommodation(String id, AlojamientoAnfitrion alojamiento) async {
+try {
+ final prefs = await SharedPreferences.getInstance();
+ final token = prefs.getString('token') ?? '';
+_dio.options.headers['Authorization'] = 'Bearer $token';
+ final response = await _dio.put(
+ '$baseUrl/actualizar/$id',
+data: alojamiento.toJson(),
+ );
+if (response.statusCode == 200) {
+    return response.data['msg'] ?? 'Alojamiento actualizado con éxito';
+} else {
+ return 'Error inesperado: ${response.statusCode}';
+}
+  } on DioException catch (e) {
+   final msg = e.response?.data['msg'] ?? 'Error desconocido al actualizar alojamiento';
+   return msg;
+  } catch (e) {
+   return 'Error al actualizar alojamiento: $e';
   }
+ }
 
-  // Eliminar alojamiento
-  Future<bool> deleteAccommodation(String id) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token') ?? '';
-      //print(token);
-      _dio.options.headers['Authorization'] = 'Bearer $token';
+// Eliminar alojamiento
+Future<String> deleteAccommodation(String id) async {
+try {
+final prefs = await SharedPreferences.getInstance();
+   final token = prefs.getString('token') ?? '';
+   _dio.options.headers['Authorization'] = 'Bearer $token';
 
-      final response = await _dio.delete('$baseUrl/borrar/$id');
-      return response.statusCode == 200;
-    } catch (e) {
-      //print('Error en deleteAccommodation: $e');
-      return false;
-    }
+   final response = await _dio.delete('$baseUrl/borrar/$id');
+   if (response.statusCode == 200) {
+    return response.data['msg'] ?? 'Alojamiento eliminado con éxito';
+   } else {
+    return 'Error inesperado: ${response.statusCode}';
+   }
+  } on DioException catch (e) {
+   final msg = e.response?.data['msg'] ?? 'Error desconocido al eliminar alojamiento';
+   return msg;
+  } catch (e) {
+   return 'Error al eliminar alojamiento: $e';
   }
+ }
 
+
+
+ // Eliminar foto de alojamiento
+ Future<String> deletePhoto(String idFoto) async {
+  try {
+   final prefs = await SharedPreferences.getInstance();
+   final token = prefs.getString('token') ?? '';
+   _dio.options.headers['Authorization'] = 'Bearer $token';
+
+   final response = await _dio.delete('$baseUrl/fotos/$idFoto');
+   if (response.statusCode == 200) {
+    return response.data['msg'] ?? 'Foto eliminada con éxito';
+   } else {
+    return 'Error inesperado: ${response.statusCode}';
+   }
+  } on DioException catch (e) {
+   final msg = e.response?.data['msg'] ?? 'Error desconocido al eliminar la foto';
+   return msg;
+  } catch (e) {
+   return 'Error al eliminar la foto: $e';
+  }
+ }
+
+ // Actualizar foto del alojamiento
+ Future<String> updatePhoto(String alojamientoId, File fotoFile) async {
+ try {
+  final prefs = await SharedPreferences.getInstance();
+  final token = prefs.getString('token') ?? '';
+  _dio.options.headers['Authorization'] = 'Bearer $token';
+
+  String fileName = fotoFile.path.split('/').last;
+
+  FormData formData = FormData.fromMap({
+   'foto': await MultipartFile.fromFile(fotoFile.path, filename: fileName),
+  });
+
+  final response = await _dio.put(
+   '$baseUrl/fotos/$alojamientoId', // o la ruta que sea para subir fotos
+   data: formData,
+   options: Options(contentType: 'multipart/form-data'),
+  );
+
+  if (response.statusCode == 200 || response.statusCode == 201) {
+   return response.data['msg'] ?? 'Foto actualizada con éxito';
+  } else {
+   return 'Error inesperado: ${response.statusCode}';
+  }
+ } on DioException catch (e) {
+  final msg = e.response?.data['msg'] ?? 'Error desconocido al actualizar la foto';
+  return msg;
+ } catch (e) {
+  return 'Error al subir foto: $e';
+}
+}
   // Obtener fotos por alojamiento
   Future<List<FotosAlojamientos>> getPhotosAccommodations(String id) async {
     final url = '$baseUrl/fotos/$id';
@@ -184,48 +249,6 @@ Future<List<Alojamiento>> getAllAccommodations() async {
     }
   }
 
-  // Eliminar foto de alojamiento
-  Future<bool> deletePhoto(String idFoto) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token') ?? '';
-      _dio.options.headers['Authorization'] = 'Bearer $token';
-
-      final response = await _dio.delete('$baseUrl/fotos/$idFoto');
-      //print('🗑️ Eliminando foto ID: $idFoto');
-      //print('📤 Status: ${response.statusCode}');
-      return response.statusCode == 200;
-    } catch (e) {
-      //print('❌ Error al eliminar la foto: $e');
-      return false;
-    }
-  }
-
-  // Actualizar foto del alojamiento
-  Future<bool> updatePhoto(String alojamientoId, File fotoFile) async {
-  try {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token') ?? '';
-    _dio.options.headers['Authorization'] = 'Bearer $token';
-
-    String fileName = fotoFile.path.split('/').last;
-
-    FormData formData = FormData.fromMap({
-      'foto': await MultipartFile.fromFile(fotoFile.path, filename: fileName),
-    });
-
-    final response = await _dio.put(
-      '$baseUrl/fotos/$alojamientoId', // o la ruta que sea para subir fotos
-      data: formData,
-      options: Options(contentType: 'multipart/form-data'),
-    );
-
-    return response.statusCode == 201 || response.statusCode == 200;
-  } catch (e) {
-    //print('Error al subir foto: $e');
-    return false;
-  }
-}
 Future<List<Alojamiento>> getAccommodationsFiltered({
   String? provincia,
   String? tipoAlojamiento,

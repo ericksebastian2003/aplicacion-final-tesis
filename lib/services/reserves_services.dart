@@ -168,22 +168,44 @@ class ReservesServices {
 
   return [];
 }
-//Elimnar los reservas
-Future<bool> delereservations(String idReserva) async{
-  try{
+// Eliminar la reserva del huesped
+// Eliminar reserva con mensaje del backend
+Future<Map<String, dynamic>> delereservations(String idReserva) async {
+  try {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token') ?? '';
     _dio.options.headers['Authorization'] = 'Bearer $token';
-    final response = await _dio.delete('https://hospedajes-4rmu.onrender.com/api/reservas/borrar/$idReserva');
-     print('🗑️ Eliminando foto ID: $idReserva');
+
+    final response = await _dio.delete(
+      'https://hospedajes-4rmu.onrender.com/api/reservas/borrar/$idReserva',
+    );
+
+    print('🗑️ Eliminando: $idReserva');
     print('📤 Status: ${response.statusCode}');
-    return response.statusCode == 200;
-  }
-  catch(e){
-    print('❌ Error al eliminar la foto: $e');
-    return false;
+    print('📦 Respuesta: ${response.data}');
+
+    if (response.statusCode == 200) {
+      return {
+        "success": true,
+        "msg": response.data['msg'] ?? 'Reserva eliminada correctamente',
+      };
+    } else {
+      return {
+        "success": false,
+        "msg": response.data['msg'] ?? 'No se pudo eliminar la reserva',
+      };
+    }
+  } catch (e) {
+    print('❌ Error al eliminar: $e');
+    return {
+      "success": false,
+      "msg": 'Error de conexión con el servidor',
+    };
   }
 }
+
+
+
 Future<String?> updateReservationsForGuest(String idReserva, Map<String, dynamic> updateData) async {
     try {
       final prefs = await SharedPreferences.getInstance();
